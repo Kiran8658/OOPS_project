@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchProducts } from "@/lib/api"; // <-- your backend API fetch
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +10,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from "@/components/ui/table";
 import {
   Select,
@@ -24,14 +22,15 @@ import {
 import {
   Plus,
   Search,
+  Filter,
   Edit,
   Trash2,
   AlertTriangle,
-  Package,
+  Package
 } from "lucide-react";
 import { InventoryForm } from "@/components/InventoryForm";
 
-export interface InventoryItem {
+interface InventoryItem {
   id: string;
   name: string;
   category: string;
@@ -42,28 +41,66 @@ export interface InventoryItem {
   status: "in-stock" | "low-stock" | "out-of-stock" | "expiring-soon";
 }
 
+const mockInventory: InventoryItem[] = [
+  {
+    id: "1",
+    name: "Basmati Rice",
+    category: "Groceries",
+    quantity: 50,
+    unit: "kg",
+    price: 120,
+    status: "in-stock"
+  },
+  {
+    id: "2",
+    name: "Wheat Flour",
+    category: "Groceries", 
+    quantity: 5,
+    unit: "kg",
+    price: 45,
+    status: "low-stock"
+  },
+  {
+    id: "3",
+    name: "Paracetamol 500mg",
+    category: "Medicines",
+    quantity: 100,
+    unit: "tablets",
+    price: 2,
+    expiryDate: "2024-12-31",
+    status: "in-stock"
+  },
+  {
+    id: "4",
+    name: "Fresh Tomatoes",
+    category: "Vegetables",
+    quantity: 0,
+    unit: "kg",
+    price: 60,
+    expiryDate: "2024-09-25",
+    status: "out-of-stock"
+  },
+  {
+    id: "5",
+    name: "Notebook A4",
+    category: "Stationery",
+    quantity: 25,
+    unit: "pieces",
+    price: 50,
+    status: "in-stock"
+  }
+];
+
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "in-stock":
-      return (
-        <Badge variant="secondary" className="bg-green-100 text-green-700">
-          In Stock
-        </Badge>
-      );
+      return <Badge variant="secondary" className="bg-success/10 text-success">In Stock</Badge>;
     case "low-stock":
-      return (
-        <Badge variant="outline" className="border-yellow-500 text-yellow-600">
-          Low Stock
-        </Badge>
-      );
+      return <Badge variant="outline" className="border-warning text-warning">Low Stock</Badge>;
     case "out-of-stock":
       return <Badge variant="destructive">Out of Stock</Badge>;
     case "expiring-soon":
-      return (
-        <Badge variant="outline" className="border-red-500 text-red-600">
-          Expiring Soon
-        </Badge>
-      );
+      return <Badge variant="outline" className="border-destructive text-destructive">Expiring Soon</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -74,33 +111,18 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [inventory, setInventory] = useState<InventoryItem[]>(mockInventory);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
-  const queryClient = useQueryClient();
-
-  // Fetch inventory from backend
-  const {
-    data: inventory = [],
-    isLoading,
-    isError,
-  } = useQuery<InventoryItem[]>({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
-    staleTime: 1000 * 10,
-    refetchOnWindowFocus: false,
-  });
-
-  // Handle URL param form open/close
   useEffect(() => {
     const add = searchParams.get("add");
     const edit = searchParams.get("edit");
-
     if (add === "true") {
       setIsFormOpen(true);
       setEditingItem(null);
-    } else if (edit && inventory.length > 0) {
-      const itemToEdit = inventory.find((i) => i.id === edit);
+    } else if (edit) {
+      const itemToEdit = inventory.find(item => item.id === edit);
       if (itemToEdit) {
         setEditingItem(itemToEdit);
         setIsFormOpen(true);
@@ -112,17 +134,15 @@ export default function Inventory() {
   }, [searchParams, inventory]);
 
   const filteredInventory = inventory.filter((item) => {
-    const matchesSearch = item.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      categoryFilter === "all" || item.category === categoryFilter;
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+    
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
-  const categories = Array.from(new Set(inventory.map((i) => i.category)));
-  const statuses = Array.from(new Set(inventory.map((i) => i.status)));
+  const categories = [...new Set(inventory.map(item => item.category))];
+  const statuses = [...new Set(inventory.map(item => item.status))];
 
   const handleAddClick = () => {
     setSearchParams({ add: "true" });
@@ -132,72 +152,37 @@ export default function Inventory() {
     setSearchParams({ edit: id });
   };
 
-  // Delete Product
-  const handleDeleteClick = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
-
-    try {
-      const res = await fetch(`http://localhost:8080/api/products/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) throw new Error("Failed to delete item");
-
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      setSearchParams({});
-    } catch (err) {
-      console.error("Error deleting item:", err);
-      alert("Failed to delete item.");
+  const handleDeleteClick = (id: string) => {
+    if (window.confirm("Are you sure you want to delete this item?")) {
+      setInventory(prev => prev.filter(item => item.id !== id));
     }
   };
 
-  // Add or Update Product
-  const handleFormSubmit = async (item: InventoryItem) => {
-    try {
-      const isEdit = !!item.id;
-      const url = isEdit
-        ? `http://localhost:8080/api/products/${item.id}`
-        : `http://localhost:8080/api/products`;
-
-      const method = isEdit ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(item),
-      });
-
-      if (!res.ok) throw new Error("Request failed");
-
-      await queryClient.invalidateQueries({ queryKey: ["products"] });
-      setSearchParams({});
-      setIsFormOpen(false);
-    } catch (error) {
-      console.error("Error saving item:", error);
-      alert("Error saving item. Check console for details.");
+  const handleFormSubmit = (item: InventoryItem) => {
+    if (item.id) {
+      // Edit existing
+      setInventory(prev => prev.map(i => (i.id === item.id ? item : i)));
+    } else {
+      // Add new
+      const newItem = { ...item, id: (inventory.length + 1).toString() };
+      setInventory(prev => [...prev, newItem]);
     }
+    setSearchParams({});
   };
-
-  if (isLoading) return <p>Loading inventory...</p>;
-  if (isError) return <p>Error loading inventory.</p>;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
             Inventory Management
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage your stock levels, track expiry dates, and monitor inventory
-            status.
+            Manage your stock levels, track expiry dates, and monitor inventory status.
           </p>
         </div>
-        <Button
-          onClick={handleAddClick}
-          className="bg-gradient-to-r from-primary to-blue-500 text-white"
-        >
+        <Button onClick={handleAddClick} className="bg-gradient-primary hover:opacity-90 text-white">
           <Plus className="w-4 h-4 mr-2" />
           Add New Item
         </Button>
@@ -207,42 +192,39 @@ export default function Inventory() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder="Search inventory items..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder="Search inventory items..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
-
+            
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Category" />
+                <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category} value={category}>{category}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                {statuses.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s
-                      .split("-")
-                      .map((w) => w[0].toUpperCase() + w.slice(1))
-                      .join(" ")}
+                {statuses.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -267,16 +249,16 @@ export default function Inventory() {
                   <TableHead>Item Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Expiry</TableHead>
+                  <TableHead>Price per Unit</TableHead>
+                  <TableHead>Expiry Date</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInventory.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.name}</TableCell>
+                  <TableRow key={item.id} className="hover:bg-muted/50">
+                    <TableCell className="font-medium">{item.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline">{item.category}</Badge>
                     </TableCell>
@@ -284,33 +266,34 @@ export default function Inventory() {
                       <div className="flex items-center">
                         {item.quantity} {item.unit}
                         {item.quantity <= 10 && item.quantity > 0 && (
-                          <AlertTriangle className="w-4 h-4 ml-2 text-yellow-600" />
+                          <AlertTriangle className="w-4 h-4 ml-2 text-warning" />
                         )}
                       </div>
                     </TableCell>
                     <TableCell>₹{item.price}</TableCell>
                     <TableCell>
-                      {item.expiryDate
-                        ? new Date(item.expiryDate).toLocaleDateString()
-                        : "-"}
+                      {item.expiryDate ? (
+                        <span className={
+                          new Date(item.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                            ? "text-destructive font-medium"
+                            : "text-muted-foreground"
+                        }>
+                          {new Date(item.expiryDate).toLocaleDateString()}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditClick(item.id!)}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600"
-                        onClick={() => handleDeleteClick(item.id!)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end space-x-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(item.id)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(item.id)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -320,7 +303,6 @@ export default function Inventory() {
         </CardContent>
       </Card>
 
-      {/* Add/Edit Form */}
       <InventoryForm
         isOpen={isFormOpen}
         onClose={() => setSearchParams({})}
@@ -330,5 +312,3 @@ export default function Inventory() {
     </div>
   );
 }
-
-!
