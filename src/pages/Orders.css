@@ -61,7 +61,7 @@
 .new-row input:focus,
 .new-row select:focus {
   border-color: #6366f1;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 2px rgba(89, 91, 241, 0.2);
 }
 
 .status-badge {
@@ -74,7 +74,7 @@
 
 .status-badge.completed {
   background-color: #dcfce7;
-  color: #166534;
+  color: #16743a;
 }
 
 .status-badge.pending {
@@ -83,7 +83,7 @@
 }
 
 .btn-save {
-  background-color: #16a34a;
+  background-color: #139542;
   color: #fff;
   padding: 0.4rem 0.8rem;
   border: none;
@@ -93,11 +93,11 @@
 }
 
 .btn-save:hover {
-  background-color: #15803d;
+  background-color: #117335;
 }
 
 .btn-save:disabled {
-  background-color: #cbd5e1;
+  background-color: #d9e0e8;
   cursor: not-allowed;
 }
 
@@ -113,7 +113,7 @@
 }
 
 .btn-view:hover {
-  color: #2563eb;
+  color: #2c65e1;
   transform: scale(1.2);
 }
 
@@ -134,12 +134,12 @@
 .muted {
   color: #9ca3af;
 }
-
-.no-data {
-  color: #6b7280;
-  text-align: center;
-  padding: 1rem;
+.no-data{
+    color: #798295;
+    text-align: center;
+    padding: 1rem;
 }
+
 
 
 
