@@ -13,7 +13,7 @@ export default function Orders() {
     status: "Pending",
   });
 
-  useEffect(() => {
+  useEffect(() => {                                   
     loadOrders();
   }, []);
 
