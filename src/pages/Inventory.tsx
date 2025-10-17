@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,6 @@ import {
 import {
   Plus,
   Search,
-  Filter,
   Edit,
   Trash2,
   AlertTriangle,
@@ -40,56 +40,6 @@ interface InventoryItem {
   expiryDate?: string;
   status: "in-stock" | "low-stock" | "out-of-stock" | "expiring-soon";
 }
-
-const mockInventory: InventoryItem[] = [
-  {
-    id: "1",
-    name: "Basmati Rice",
-    category: "Groceries",
-    quantity: 50,
-    unit: "kg",
-    price: 120,
-    status: "in-stock"
-  },
-  {
-    id: "2",
-    name: "Wheat Flour",
-    category: "Groceries", 
-    quantity: 5,
-    unit: "kg",
-    price: 45,
-    status: "low-stock"
-  },
-  {
-    id: "3",
-    name: "Paracetamol 500mg",
-    category: "Medicines",
-    quantity: 100,
-    unit: "tablets",
-    price: 2,
-    expiryDate: "2024-12-31",
-    status: "in-stock"
-  },
-  {
-    id: "4",
-    name: "Fresh Tomatoes",
-    category: "Vegetables",
-    quantity: 0,
-    unit: "kg",
-    price: 60,
-    expiryDate: "2024-09-25",
-    status: "out-of-stock"
-  },
-  {
-    id: "5",
-    name: "Notebook A4",
-    category: "Stationery",
-    quantity: 25,
-    unit: "pieces",
-    price: 50,
-    status: "in-stock"
-  }
-];
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -111,9 +61,25 @@ export default function Inventory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [inventory, setInventory] = useState<InventoryItem[]>(mockInventory);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
+
+  const API_URL = "http://localhost:8080/api/inventory"; // your backend endpoint
+
+  // Fetch inventory from backend
+  const fetchInventory = async () => {
+    try {
+      const response = await axios.get(API_URL);
+      setInventory(response.data);
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
 
   useEffect(() => {
     const add = searchParams.get("add");
@@ -137,7 +103,6 @@ export default function Inventory() {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
     const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    
     return matchesSearch && matchesCategory && matchesStatus;
   });
 
@@ -152,22 +117,32 @@ export default function Inventory() {
     setSearchParams({ edit: id });
   };
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this item?")) {
-      setInventory(prev => prev.filter(item => item.id !== id));
+      try {
+        await axios.delete(`${API_URL}/${id}`);
+        setInventory(prev => prev.filter(item => item.id !== id));
+      } catch (error) {
+        console.error("Error deleting item:", error);
+      }
     }
   };
 
-  const handleFormSubmit = (item: InventoryItem) => {
-    if (item.id) {
-      // Edit existing
-      setInventory(prev => prev.map(i => (i.id === item.id ? item : i)));
-    } else {
-      // Add new
-      const newItem = { ...item, id: (inventory.length + 1).toString() };
-      setInventory(prev => [...prev, newItem]);
+  const handleFormSubmit = async (item: InventoryItem) => {
+    try {
+      if (item.id) {
+        // Edit existing
+        const response = await axios.put(`${API_URL}/${item.id}`, item);
+        setInventory(prev => prev.map(i => (i.id === item.id ? response.data : i)));
+      } else {
+        // Add new
+        const response = await axios.post(API_URL, item);
+        setInventory(prev => [...prev, response.data]);
+      }
+      setSearchParams({});
+    } catch (error) {
+      console.error("Error saving item:", error);
     }
-    setSearchParams({});
   };
 
   return (
@@ -192,16 +167,14 @@ export default function Inventory() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search inventory items..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                placeholder="Search inventory items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
             </div>
             
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
