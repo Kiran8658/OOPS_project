@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   TrendingUp,
@@ -13,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { StatDetailModal } from "./StatDetailModal";
 
-// Type for a stat card
 interface StatCardProps {
   title: string;
   value: string;
@@ -24,16 +24,23 @@ interface StatCardProps {
   onClick?: () => void;
 }
 
-// Generic stat card component
-const StatCard = ({ title, value, change, changeType, icon, description, onClick }: StatCardProps) => {
+const StatCard = ({
+  title,
+  value,
+  change,
+  changeType,
+  icon,
+  description,
+  onClick,
+}: StatCardProps) => {
   const getChangeColor = () => {
     switch (changeType) {
       case "positive":
-        return "text-success";
+        return "text-green-600";
       case "negative":
-        return "text-destructive";
+        return "text-red-600";
       default:
-        return "text-muted-foreground";
+        return "text-gray-500";
     }
   };
 
@@ -56,7 +63,9 @@ const StatCard = ({ title, value, change, changeType, icon, description, onClick
       onClick={onClick}
     >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">
+          {title}
+        </CardTitle>
         <div className="text-primary">{icon}</div>
       </CardHeader>
       <CardContent>
@@ -65,79 +74,95 @@ const StatCard = ({ title, value, change, changeType, icon, description, onClick
           {getChangeIcon()}
           <span className="ml-1">{change}</span>
         </div>
-        {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+        {description && (
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+        )}
       </CardContent>
     </Card>
   );
 };
 
-// Main DashboardStats component
-interface DashboardStatsProps {
-  stats?: Record<string, any>; // Optional for backend integration
+interface DashboardStatsData {
+  totalRevenue: number;
+  totalOrders: number;
+  inventoryItems: number;
+  lowStockAlerts: number;
+  revenueChange: number;
+  ordersChange: number;
+  inventoryChange: number;
+  newAlerts: number;
 }
 
-export function DashboardStats({ stats }: DashboardStatsProps) {
-  // Modal state
+export function DashboardStats() {
+  const [stats, setStats] = useState<DashboardStatsData | null>(null);
+  const [loading, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
+  const [filterDateRange, setFilterDateRange] = useState("Last Month");
 
-  // Filter state
-  const [filterDateRange, setFilterDateRange] = useState<string>("Last Month");
-
-  // Dummy stat details for modal
-  const statDetailsData: Record<string, string> = {
-    "Total Revenue":
-      "Detailed revenue data...\n- Jan: ₹40,000\n- Feb: ₹45,231\n- Mar: ₹50,000",
-    "Total Orders": "Detailed orders data...\n- Jan: 1,100\n- Feb: 1,234\n- Mar: 1,300",
-    "Inventory Items": "Detailed inventory data...\n- Total items: 856\n- Low stock: 12",
-    "Low Stock Alerts": "Detailed alerts data...\n- New alerts: 3\n- Total alerts: 12",
+  // 🔥 Fetch data from backend on mount
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get("http://localhost:8080/api/dashboard/stats");
+      setStats(res.data);
+    } catch (err) {
+      console.error("❌ Failed to fetch dashboard stats:", err);
+      alert("Failed to load stats from backend. Check your server.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const openModal = (statTitle: string) => {
-    setSelectedStat(statTitle);
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const openModal = (title: string) => {
+    setSelectedStat(title);
     setModalOpen(true);
   };
 
   const closeModal = () => {
-    setModalOpen(false);
     setSelectedStat(null);
+    setModalOpen(false);
   };
 
   const handleRefresh = () => {
-    console.log("Refreshing stats...");
-    alert("Refreshing stats...");
+    fetchStats();
   };
 
   const handleFilterChange = () => {
-    setFilterDateRange((prev) => (prev === "Last Month" ? "Last Quarter" : "Last Month"));
-    alert(
-      "Filter changed to " +
-        (filterDateRange === "Last Month" ? "Last Quarter" : "Last Month")
+    setFilterDateRange((prev) =>
+      prev === "Last Month" ? "Last Quarter" : "Last Month"
     );
   };
 
-  // Use backend stats if provided, otherwise fallback to dummy values
-  const revenue = stats?.totalRevenue ?? "₹45,231";
-  const revenueChange = stats?.revenueChange
-    ? `+${stats.revenueChange}% from last month`
-    : "+12.5% from last month";
+  // Dummy fallback if no backend data yet
+  const defaultStats: DashboardStatsData = {
+    totalRevenue: 45231,
+    totalOrders: 1234,
+    inventoryItems: 856,
+    lowStockAlerts: 12,
+    revenueChange: 12.5,
+    ordersChange: 8.2,
+    inventoryChange: -2.1,
+    newAlerts: 3,
+  };
 
-  const orders = stats?.totalOrders ?? "1,234";
-  const ordersChange = stats?.ordersChange
-    ? `+${stats.ordersChange}% from last month`
-    : "+8.2% from last month";
+  const s = stats || defaultStats;
 
-  const inventory = stats?.inventoryItems ?? "856";
-  const inventoryChange = stats?.inventoryChange
-    ? `${stats.inventoryChange}% from last month`
-    : "-2.1% from last month";
-
-  const lowStock = stats?.lowStockAlerts ?? "12";
-  const newAlerts = stats?.newAlerts ?? "3";
+  // Example modal data
+  const statDetailsData: Record<string, string> = {
+    "Total Revenue": `Detailed revenue data:\n- This month: ₹${s.totalRevenue}\n- Change: ${s.revenueChange}%`,
+    "Total Orders": `Orders processed: ${s.totalOrders}\nChange: ${s.ordersChange}%`,
+    "Inventory Items": `Total items: ${s.inventoryItems}\nChange: ${s.inventoryChange}%`,
+    "Low Stock Alerts": `Current alerts: ${s.lowStockAlerts}\nNew alerts: ${s.newAlerts}`,
+  };
 
   return (
     <>
-      {/* Header with filter and refresh */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Dashboard Stats</h2>
         <div className="flex space-x-2">
@@ -154,20 +179,21 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
             variant="outline"
             size="sm"
             onClick={handleRefresh}
+            disabled={loading}
             className="flex items-center space-x-1"
           >
-            <RefreshCw className="w-4 h-4" />
-            <span>Refresh</span>
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            <span>{loading ? "Refreshing..." : "Refresh"}</span>
           </Button>
         </div>
       </div>
 
-      {/* Stat cards */}
+      {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Revenue"
-          value={revenue}
-          change={revenueChange}
+          value={`₹${s.totalRevenue.toLocaleString()}`}
+          change={`+${s.revenueChange}% from last month`}
           changeType="positive"
           icon={<DollarSign className="w-5 h-5" />}
           description="Monthly revenue target: ₹50,000"
@@ -175,8 +201,8 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         />
         <StatCard
           title="Total Orders"
-          value={orders}
-          change={ordersChange}
+          value={s.totalOrders.toString()}
+          change={`+${s.ordersChange}% from last month`}
           changeType="positive"
           icon={<ShoppingCart className="w-5 h-5" />}
           description="Average order value: ₹367"
@@ -184,17 +210,17 @@ export function DashboardStats({ stats }: DashboardStatsProps) {
         />
         <StatCard
           title="Inventory Items"
-          value={inventory}
-          change={inventoryChange}
-          changeType="negative"
+          value={s.inventoryItems.toString()}
+          change={`${s.inventoryChange}% from last month`}
+          changeType={s.inventoryChange < 0 ? "negative" : "positive"}
           icon={<Package className="w-5 h-5" />}
-          description="Items running low: 12"
+          description={`Items running low: ${s.lowStockAlerts}`}
           onClick={() => openModal("Inventory Items")}
         />
         <StatCard
           title="Low Stock Alerts"
-          value={lowStock}
-          change={`+${newAlerts} new alerts`}
+          value={s.lowStockAlerts.toString()}
+          change={`+${s.newAlerts} new alerts`}
           changeType="negative"
           icon={<AlertTriangle className="w-5 h-5" />}
           description="Requires immediate attention"

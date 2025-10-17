@@ -1,3 +1,4 @@
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -7,9 +8,10 @@ import {
   Package,
   FileText,
   AlertTriangle,
-  BarChart3
+  BarChart3,
 } from "lucide-react";
 
+// Type definition for QuickAction component
 interface QuickActionProps {
   title: string;
   description: string;
@@ -18,130 +20,123 @@ interface QuickActionProps {
   variant?: "default" | "primary" | "secondary" | "accent";
 }
 
-const QuickAction = ({ title, description, icon, onClick, variant = "default" }: QuickActionProps) => {
+// Individual quick-action button card
+const QuickAction: React.FC<QuickActionProps> = ({
+  title,
+  description,
+  icon,
+  onClick,
+  variant = "default",
+}) => {
   const getButtonClasses = () => {
     switch (variant) {
       case "primary":
-        return "bg-gradient-primary hover:opacity-90 text-white border-0 shadow-md hover:shadow-lg";
+        return "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg hover:opacity-90";
       case "secondary":
-        return "bg-gradient-secondary hover:opacity-90 text-white border-0 shadow-md hover:shadow-lg";
+        return "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md hover:shadow-lg hover:opacity-90";
       case "accent":
-        return "bg-gradient-accent hover:opacity-90 text-white border-0 shadow-md hover:shadow-lg";
+        return "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-md hover:shadow-lg hover:opacity-90";
       default:
         return "bg-muted hover:bg-muted/80 text-foreground border border-border";
     }
   };
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-200 cursor-pointer group" onClick={onClick}>
-      <CardContent className="p-6">
-        <div className="flex items-center space-x-4">
-          <Button
-            size="lg"
-            className={`w-12 h-12 p-0 ${getButtonClasses()} group-hover:scale-105 transition-transform`}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick();
-            }}
-          >
-            {icon}
-          </Button>
-          <div className="flex-1">
-            <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-              {title}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              {description}
-            </p>
-          </div>
+    <Card
+      onClick={onClick}
+      className="hover:shadow-lg transition-all duration-200 cursor-pointer group"
+    >
+      <CardContent className="p-5 flex items-center space-x-4">
+        <Button
+          size="lg"
+          className={`w-12 h-12 p-0 ${getButtonClasses()} group-hover:scale-105 transition-transform`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+          }}
+        >
+          {icon}
+        </Button>
+
+        <div className="flex-1 text-left">
+          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+            {title}
+          </h3>
+          <p className="text-sm text-muted-foreground">{description}</p>
         </div>
       </CardContent>
     </Card>
   );
 };
 
-export function QuickActions() {
+// Container for all quick actions
+export const QuickActions: React.FC = () => {
   const navigate = useNavigate();
 
-  const handleAddInventory = () => {
-    navigate("/inventory?add=true");
-  };
-
-  const handleCreateOrder = () => {
-    navigate("/orders?create=true");
-  };
-
-  const handleViewAlerts = () => {
-    navigate("/alerts");
-  };
-
-  const handleGenerateReport = () => {
-    navigate("/analytics?report=true");
-  };
-
-  const handleViewAnalytics = () => {
-    navigate("/analytics");
-  };
-
-  const handleManageStock = () => {
-    navigate("/inventory?manage=true");
-  };
+  const actions = [
+    {
+      title: "Add New Item",
+      desc: "Add products to your inventory",
+      icon: <Plus className="w-5 h-5" />,
+      onClick: () => navigate("/inventory?add=true"),
+      variant: "primary",
+    },
+    {
+      title: "Create Order",
+      desc: "Process a new customer order",
+      icon: <ShoppingCart className="w-5 h-5" />,
+      onClick: () => navigate("/orders?create=true"),
+      variant: "secondary",
+    },
+    {
+      title: "Manage Stock",
+      desc: "Update inventory levels",
+      icon: <Package className="w-5 h-5" />,
+      onClick: () => navigate("/inventory?manage=true"),
+    },
+    {
+      title: "View Alerts",
+      desc: "Check low stock warnings",
+      icon: <AlertTriangle className="w-5 h-5" />,
+      onClick: () => navigate("/alerts"),
+    },
+    {
+      title: "Generate Report",
+      desc: "Create sales & inventory reports",
+      icon: <FileText className="w-5 h-5" />,
+      onClick: () => navigate("/analytics?report=true"),
+      variant: "accent",
+    },
+    {
+      title: "Analytics",
+      desc: "View detailed analytics",
+      icon: <BarChart3 className="w-5 h-5" />,
+      onClick: () => navigate("/analytics"),
+    },
+  ];
 
   return (
-    <Card>
+    <Card className="shadow-sm hover:shadow-md transition-shadow">
       <CardHeader>
         <CardTitle className="text-lg font-semibold text-foreground">
           Quick Actions
         </CardTitle>
       </CardHeader>
+
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <QuickAction
-            title="Add New Item"
-            description="Add products to your inventory"
-            icon={<Plus className="w-5 h-5" />}
-            onClick={handleAddInventory}
-            variant="primary"
-          />
-          
-          <QuickAction
-            title="Create Order"
-            description="Process a new customer order"
-            icon={<ShoppingCart className="w-5 h-5" />}
-            onClick={handleCreateOrder}
-            variant="secondary"
-          />
-          
-          <QuickAction
-            title="Manage Stock"
-            description="Update inventory levels"
-            icon={<Package className="w-5 h-5" />}
-            onClick={handleManageStock}
-          />
-          
-          <QuickAction
-            title="View Alerts"
-            description="Check low stock warnings"
-            icon={<AlertTriangle className="w-5 h-5" />}
-            onClick={handleViewAlerts}
-          />
-          
-          <QuickAction
-            title="Generate Report"
-            description="Create sales & inventory reports"
-            icon={<FileText className="w-5 h-5" />}
-            onClick={handleGenerateReport}
-            variant="accent"
-          />
-          
-          <QuickAction
-            title="Analytics"
-            description="View detailed analytics"
-            icon={<BarChart3 className="w-5 h-5" />}
-            onClick={handleViewAnalytics}
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {actions.map((action, idx) => (
+            <QuickAction
+              key={idx}
+              title={action.title}
+              description={action.desc}
+              icon={action.icon}
+              onClick={action.onClick}
+              variant={action.variant as any}
+            />
+          ))}
         </div>
       </CardContent>
     </Card>
   );
-}
+};

@@ -1,111 +1,127 @@
 import { useEffect, useState } from "react";
-import { DashboardStats } from "@/components/DashboardStats";
-import { WeeklySalesChart } from "@/components/WeeklySalesChart";
-import { SalesByCategoryChart } from "@/components/SalesByCategoryChart";
-import { QuickActions } from "@/components/QuickActions";
-import { RecentActivity } from "@/components/RecentActivity";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useNavigate } from "react-router-dom";
+import { ShoppingCart, Package, AlertTriangle, TrendingUp } from "lucide-react";
 import axios from "axios";
 
-// Types
-interface Stats {
-  totalRevenue: number;
-  revenueChange: number;
-  monthlyTarget: number;
-  totalOrders: number;
-  ordersChange: number;
-  avgOrderValue: number;
-  inventoryItems: number;
-  inventoryChange: number;
-  lowStockAlerts: number;
-  newAlerts: number;
-}
-
-interface SalesData {
-  day?: string; // For weekly
-  category?: string; // For category chart
-  value: number;
-}
-
-interface Activity {
+interface ActivityItem {
   id: string;
-  type: string;
-  message: string;
-  status: string;
-  timestamp: string;
+  type: "order" | "inventory" | "alert" | "analytics";
+  title: string;
+  description: string;
+  time: string;
+  badge?: { text: string; variant: "default" | "secondary" | "destructive" | "outline" };
 }
 
-export default function Dashboard() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [weeklySales, setWeeklySales] = useState<SalesData[]>([]);
-  const [categorySales, setCategorySales] = useState<SalesData[]>([]);
-  const [recentActivity, setRecentActivity] = useState<Activity[]>([]);
+interface RecentActivityProps {
+  activities?: ActivityItem[]; // optional prop
+}
+
+export function RecentActivity({ activities: propActivities }: RecentActivityProps) {
+  const [activities, setActivities] = useState<ActivityItem[]>(propActivities || []);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        // Stats
-        const statsRes = await axios.get("http://localhost:8080/api/dashboard/stats");
-        setStats(statsRes.data);
+    if (!propActivities) {
+      // Fetch from backend only if propActivities not provided
+      const fetchActivities = async () => {
+        try {
+          const res = await axios.get<ActivityItem[]>(
+            "http://localhost:8080/api/dashboard/recent-activity"
+          );
+          setActivities(res.data);
+        } catch (error) {
+          console.error("Failed to fetch recent activity:", error);
+          // fallback mock data
+          setActivities([
+            {
+              id: "1",
+              type: "order",
+              title: "New Order #ORD-1234",
+              description: "Customer purchased 5 items worth ₹1,250",
+              time: "2 minutes ago",
+              badge: { text: "Completed", variant: "default" },
+            },
+            {
+              id: "2",
+              type: "alert",
+              title: "Low Stock Alert",
+              description: "Rice (Basmati) - Only 5 kg remaining",
+              time: "15 minutes ago",
+              badge: { text: "Critical", variant: "destructive" },
+            },
+          ]);
+        }
+      };
+      fetchActivities();
+    }
+  }, [propActivities]);
 
-        // Weekly sales
-        const weeklyRes = await axios.get("http://localhost:8080/api/dashboard/weekly-sales");
-        setWeeklySales(weeklyRes.data);
+  const handleActivityClick = (type: ActivityItem["type"]) => {
+    switch (type) {
+      case "order":
+        navigate("/orders");
+        break;
+      case "inventory":
+        navigate("/inventory");
+        break;
+      case "alert":
+        navigate("/alerts");
+        break;
+      case "analytics":
+        navigate("/analytics");
+        break;
+    }
+  };
 
-        // Sales by category
-        const categoryRes = await axios.get("http://localhost:8080/api/dashboard/sales-category");
-        setCategorySales(categoryRes.data);
-
-        // Recent activity
-        const activityRes = await axios.get("http://localhost:8080/api/dashboard/recent-activity");
-        setRecentActivity(activityRes.data);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      }
-    };
-    fetchDashboardData();
-  }, []);
+  const getActivityIcon = (type: ActivityItem["type"]) => {
+    switch (type) {
+      case "order":
+        return <ShoppingCart className="w-4 h-4 text-primary" />;
+      case "inventory":
+        return <Package className="w-4 h-4 text-secondary" />;
+      case "alert":
+        return <AlertTriangle className="w-4 h-4 text-destructive" />;
+      case "analytics":
+        return <TrendingUp className="w-4 h-4 text-accent" />;
+    }
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-            Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Welcome back! Here's what's happening with your business today.
-          </p>
+    <Card className="col-span-1">
+      <CardHeader>
+        <CardTitle className="text-lg font-semibold text-foreground">Recent Activity</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {activities.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-primary"
+              onClick={() => handleActivityClick(item.type)}
+            >
+              <Avatar className="w-8 h-8 bg-muted">
+                <AvatarFallback className="bg-transparent">{getActivityIcon(item.type)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+                  {item.badge && (
+                    <Badge variant={item.badge.variant} className="ml-2 text-xs">
+                      {item.badge.text}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                <p className="text-xs text-muted-foreground mt-1">{item.time}</p>
+              </div>
+            </button>
+          ))}
         </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">Today</p>
-          <p className="text-lg font-semibold text-foreground">
-            {new Date().toLocaleDateString("en-IN", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric"
-            })}
-          </p>
-        </div>
-      </div>
-
-      {/* Dashboard Stats */}
-      {stats && <DashboardStats stats={stats} />}
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <WeeklySalesChart data={weeklySales} />
-        <SalesByCategoryChart data={categorySales} />
-      </div>
-
-      {/* Quick Actions and Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <QuickActions />
-        </div>
-        <RecentActivity activities={recentActivity} />
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -14,10 +14,15 @@ interface StatDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
-  data: string; // Could be JSON or formatted string for report
+  data: string; // Can be JSON or formatted string
 }
 
-export function StatDetailModal({ isOpen, onClose, title, data }: StatDetailModalProps) {
+export function StatDetailModal({
+  isOpen,
+  onClose,
+  title,
+  data,
+}: StatDetailModalProps) {
   const handleDownload = () => {
     const blob = new Blob([data], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
@@ -28,6 +33,16 @@ export function StatDetailModal({ isOpen, onClose, title, data }: StatDetailModa
     URL.revokeObjectURL(url);
   };
 
+  // Format JSON data nicely if possible
+  const formattedData = (() => {
+    try {
+      const parsed = JSON.parse(data);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return data;
+    }
+  })();
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
@@ -37,10 +52,19 @@ export function StatDetailModal({ isOpen, onClose, title, data }: StatDetailModa
             Detailed analytics data for {title}.
           </DialogDescription>
         </DialogHeader>
-        <pre className="whitespace-pre-wrap p-4 bg-gray-100 rounded-md text-sm">{data}</pre>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Close</Button>
-          <Button onClick={handleDownload} className="flex items-center space-x-2">
+
+        <pre className="whitespace-pre-wrap p-4 bg-gray-100 rounded-md text-sm overflow-x-auto">
+          {formattedData}
+        </pre>
+
+        <DialogFooter className="flex justify-between">
+          <Button variant="outline" onClick={onClose}>
+            Close
+          </Button>
+          <Button
+            onClick={handleDownload}
+            className="flex items-center space-x-2"
+          >
             <Download className="w-4 h-4" />
             <span>Download Report</span>
           </Button>
