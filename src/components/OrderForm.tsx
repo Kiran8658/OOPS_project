@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { addOrder } from "@/api/orderService"; // ✅ ensure correct filename + lowercase
 import {
   Select,
   SelectContent,
@@ -53,7 +54,14 @@ interface OrderFormProps {
   orderToEdit?: Order | null;
 }
 
-export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = false, orderToEdit }: OrderFormProps) {
+export function OrderForm({
+  isOpen,
+  onClose,
+  onSubmit,
+  isEdit = false,
+  isView = false,
+  orderToEdit,
+}: OrderFormProps) {
   const [formData, setFormData] = useState<OrderFormData>({
     customerName: "",
     items: [{ id: "1", name: "", quantity: 1, price: 0 }],
@@ -61,18 +69,17 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
     notes: "",
   });
 
+  // ✅ Fill form for editing or reset for new
   useEffect(() => {
     if (isOpen) {
       if (isEdit && orderToEdit) {
-        // Pre-fill form for editing
         setFormData({
           customerName: orderToEdit.customerName,
-          items: [], // Note: Since orderToEdit.items is a number, we can't pre-fill detailed items. In a real app, you'd have detailed item data.
+          items: [{ id: "1", name: "", quantity: 1, price: 0 }], // placeholder
           paymentMethod: orderToEdit.paymentMethod,
           notes: "",
         });
       } else {
-        // Reset for new order
         setFormData({
           customerName: "",
           items: [{ id: "1", name: "", quantity: 1, price: 0 }],
@@ -83,16 +90,28 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
     }
   }, [isOpen, isEdit, orderToEdit]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ✅ Calculate total dynamically
+  const calculateTotal = () => {
+    return formData.items.reduce(
+      (total, item) => total + item.quantity * item.price,
+      0
+    );
+  };
+
+  // ✅ Handle form submit (send to backend)
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
     if (!formData.customerName.trim()) {
       alert("Please enter customer name");
       return;
     }
 
-    if (formData.items.some(item => !item.name.trim() || item.quantity <= 0 || item.price <= 0)) {
+    if (
+      formData.items.some(
+        (item) => !item.name.trim() || item.quantity <= 0 || item.price <= 0
+      )
+    ) {
       alert("Please fill in all item details with valid values");
       return;
     }
@@ -102,19 +121,43 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
       return;
     }
 
-    onSubmit(formData);
+    try {
+      // ✅ Construct order object for backend
+      const orderPayload = {
+        customerName: formData.customerName,
+        items: formData.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        paymentMethod: formData.paymentMethod,
+        totalAmount: calculateTotal(),
+        notes: formData.notes,
+        status: "Pending",
+        date: new Date().toISOString(),
+      };
 
-    // Reset form
-    setFormData({
-      customerName: "",
-      items: [{ id: "1", name: "", quantity: 1, price: 0 }],
-      paymentMethod: "",
-      notes: "",
-    });
+      // ✅ Send to backend using addOrder API
+      await addOrder(orderPayload);
 
-    onClose();
+      alert("✅ Order created successfully!");
+
+      // Notify parent and reset
+      onSubmit(formData);
+      setFormData({
+        customerName: "",
+        items: [{ id: "1", name: "", quantity: 1, price: 0 }],
+        paymentMethod: "",
+        notes: "",
+      });
+      onClose();
+    } catch (error) {
+      console.error("❌ Error creating order:", error);
+      alert("Failed to create order. Please try again.");
+    }
   };
 
+  // ✅ Item operations
   const addItem = () => {
     const newItem: OrderItem = {
       id: (formData.items.length + 1).toString(),
@@ -122,7 +165,7 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
       quantity: 1,
       price: 0,
     };
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       items: [...prev.items, newItem],
     }));
@@ -130,24 +173,24 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
 
   const removeItem = (id: string) => {
     if (formData.items.length > 1) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        items: prev.items.filter(item => item.id !== id),
+        items: prev.items.filter((item) => item.id !== id),
       }));
     }
   };
 
-  const updateItem = (id: string, field: keyof OrderItem, value: string | number) => {
-    setFormData(prev => ({
+  const updateItem = (
+    id: string,
+    field: keyof OrderItem,
+    value: string | number
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      items: prev.items.map(item =>
+      items: prev.items.map((item) =>
         item.id === id ? { ...item, [field]: value } : item
       ),
     }));
-  };
-
-  const calculateTotal = () => {
-    return formData.items.reduce((total, item) => total + (item.quantity * item.price), 0);
   };
 
   return (
@@ -162,20 +205,24 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
               ? "Review the order details below."
               : isEdit
               ? "Update the order details below."
-              : "Enter the order details below. Add multiple items if needed."
-            }
+              : "Enter the order details below. Add multiple items if needed."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Customer Information */}
+          {/* Customer Info */}
           <div className="space-y-4">
             <div>
               <Label htmlFor="customerName">Customer Name *</Label>
               <Input
                 id="customerName"
                 value={formData.customerName}
-                onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    customerName: e.target.value,
+                  }))
+                }
                 placeholder="Enter customer name"
                 required
               />
@@ -185,7 +232,12 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
               <Label htmlFor="paymentMethod">Payment Method *</Label>
               <Select
                 value={formData.paymentMethod}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, paymentMethod: value }))}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    paymentMethod: value,
+                  }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select payment method" />
@@ -194,7 +246,9 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
                   <SelectItem value="Cash">Cash</SelectItem>
                   <SelectItem value="Card">Card</SelectItem>
                   <SelectItem value="UPI">UPI</SelectItem>
-                  <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="Bank Transfer">
+                    Bank Transfer
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -204,7 +258,12 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label>Order Items *</Label>
-              <Button type="button" variant="outline" size="sm" onClick={addItem}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addItem}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Item
               </Button>
@@ -232,7 +291,9 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
                     <Input
                       id={`item-name-${item.id}`}
                       value={item.name}
-                      onChange={(e) => updateItem(item.id, "name", e.target.value)}
+                      onChange={(e) =>
+                        updateItem(item.id, "name", e.target.value)
+                      }
                       placeholder="Enter item name"
                       required
                     />
@@ -245,7 +306,13 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
                       type="number"
                       min="1"
                       value={item.quantity}
-                      onChange={(e) => updateItem(item.id, "quantity", parseInt(e.target.value) || 1)}
+                      onChange={(e) =>
+                        updateItem(
+                          item.id,
+                          "quantity",
+                          parseInt(e.target.value) || 1
+                        )
+                      }
                       required
                     />
                   </div>
@@ -258,7 +325,13 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
                       min="0"
                       step="0.01"
                       value={item.price}
-                      onChange={(e) => updateItem(item.id, "price", parseFloat(e.target.value) || 0)}
+                      onChange={(e) =>
+                        updateItem(
+                          item.id,
+                          "price",
+                          parseFloat(e.target.value) || 0
+                        )
+                      }
                       placeholder="0.00"
                       required
                     />
@@ -282,7 +355,9 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
             <Textarea
               id="notes"
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, notes: e.target.value }))
+              }
               placeholder="Add any special notes or instructions..."
               rows={3}
             />
@@ -292,7 +367,10 @@ export function OrderForm({ isOpen, onClose, onSubmit, isEdit = false, isView = 
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-gradient-primary hover:opacity-90">
+            <Button
+              type="submit"
+              className="bg-gradient-primary hover:opacity-90"
+            >
               {isEdit ? "Update Order" : "Create Order"}
             </Button>
           </DialogFooter>
