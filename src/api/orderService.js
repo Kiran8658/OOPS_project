@@ -1,25 +1,33 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8080/api/orders"; // your backend base URL
+// ✅ Use your .env base URL or default to Spring Boot localhost
+const API = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
+});
 
+// ✅ Get all orders
 export const getOrders = async () => {
-  const response = await axios.get(API_URL);
+  const response = await API.get("/orders");
   return response.data;
 };
 
-export async function addOrder(order) {
-  const res = await fetch('http://localhost:8080/orders', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(order)
-  });
-  if (!res.ok) {
-    const errText = await res.text();
-    throw new Error(errText || "Failed");
+// ✅ Add a new order
+export const addOrder = async (order) => {
+  try {
+    const response = await API.post("/orders", order);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding order:", error);
+    throw error;
   }
-  return res.json();
-}
+};
 
+// ✅ Delete order by ID
 export const deleteOrder = async (id) => {
-  await axios.delete(`${API_URL}/${id}`);
+  try {
+    await API.delete(`/orders/${id}`);
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    throw error;
+  }
 };
