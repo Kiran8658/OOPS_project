@@ -1,32 +1,44 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface InventoryItem {
-  id: string;
+  id?: string;
   name: string;
   category: string;
   quantity: number;
   unit: string;
   price: number;
   expiryDate?: string;
-  status: "in-stock" | "low-stock" | "out-of-stock" | "expiring-soon";
+  status?: "in-stock" | "low-stock" | "out-of-stock" | "expiring-soon";
 }
 
 interface InventoryFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (item: InventoryItem) => void;
+  onSaved: (item: InventoryItem) => void;
   initialData?: InventoryItem | null;
 }
 
-const categories = ["Groceries", "Medicines", "Vegetables", "Stationery"];
-const units = ["kg", "tablets", "pieces", "liters"];
+export function InventoryForm({
+  isOpen,
+  onClose,
+  onSaved,
+  initialData,
+}: Readonly<InventoryFormProps>) {
 
-export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readonly<InventoryFormProps>) {
+  // ✅ All hooks must be inside component
   const [formData, setFormData] = useState<InventoryItem>({
     id: "",
     name: "",
@@ -37,6 +49,10 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
     expiryDate: undefined,
     status: "in-stock",
   });
+
+  // ✅ Categories and units defined inside component (safe scope)
+  const categories = ["Groceries", "Medicines", "Vegetables", "Stationery"];
+  const units = ["kg", "tablets", "pieces", "liters"];
 
   useEffect(() => {
     if (initialData) {
@@ -55,55 +71,78 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
     }
   }, [initialData]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim()) {
-      alert("Please enter item name");
-      return;
-    }
-    if (!formData.category) {
-      alert("Please select a category");
-      return;
-    }
-    if (formData.quantity < 0) {
-      alert("Quantity cannot be negative");
-      return;
-    }
-    if (!formData.unit) {
-      alert("Please select a unit");
-      return;
-    }
-    if (formData.price < 0) {
-      alert("Price cannot be negative");
-      return;
-    }
+    // Validation
+    if (!formData.name.trim()) return alert("Please enter item name");
+    if (!formData.category) return alert("Please select a category");
+    if (formData.quantity < 0) return alert("Quantity cannot be negative");
+    if (!formData.unit) return alert("Please select a unit");
+    if (formData.price < 0) return alert("Price cannot be negative");
 
-    // Determine status based on quantity and expiryDate
+    // Determine status dynamically
     let status: InventoryItem["status"] = "in-stock";
-    if (formData.quantity === 0) {
-      status = "out-of-stock";
-    } else if (formData.quantity <= 10) {
-      status = "low-stock";
-    }
+    if (formData.quantity === 0) status = "out-of-stock";
+    else if (formData.quantity <= 10) status = "low-stock";
+
     if (formData.expiryDate) {
       const expiry = new Date(formData.expiryDate);
       const now = new Date();
       const diffDays = (expiry.getTime() - now.getTime()) / (1000 * 3600 * 24);
-      if (diffDays <= 30) {
-        status = "expiring-soon";
-      }
+      if (diffDays <= 30) status = "expiring-soon";
     }
 
-    onSubmit({ ...formData, status });
-    onClose();
+    // ✅ Match backend JSON structure
+    const payload = {
+      name: formData.name,
+      category: formData.category,
+      quantity: formData.quantity,
+      unit: formData.unit,
+      price: formData.price,
+      expiryDate: formData.expiryDate || null,
+      status: status,
+    };
+
+    try {
+      let response;
+      if (formData.id) {
+        // Update existing item
+        response = await axios.put(
+          `http://localhost:8080/api/inventory/${formData.id}`,
+          payload
+        );
+      } else {
+        // Add new item
+        response = await axios.post(
+          "http://localhost:8080/api/inventory",
+          payload
+        );
+      }
+
+      onSaved(response.data);
+      onClose();
+    } catch (error: any) {
+      console.error("❌ Failed to save inventory item:", error);
+      if (error.response) {
+        alert(
+          `Error ${error.response.status}: ${
+            error.response.data?.message || "Check backend logs"
+          }`
+        );
+      } else {
+        alert("Network or server error while saving inventory item.");
+      }
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{formData.id ? "Edit Inventory Item" : "Add New Inventory Item"}</DialogTitle>
+          <DialogTitle>
+            {formData.id ? "Edit Inventory Item" : "Add New Inventory Item"}
+          </DialogTitle>
           <DialogDescription>
             Fill in the details of the inventory item.
           </DialogDescription>
@@ -115,7 +154,9 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, name: e.target.value }))
+              }
               placeholder="Enter item name"
               required
             />
@@ -125,14 +166,18 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
             <Label htmlFor="category">Category *</Label>
             <Select
               value={formData.category}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, category: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(cat => (
-                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {cat}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -145,7 +190,12 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
               type="number"
               min="0"
               value={formData.quantity}
-              onChange={(e) => setFormData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  quantity: parseInt(e.target.value) || 0,
+                }))
+              }
               required
             />
           </div>
@@ -154,14 +204,18 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
             <Label htmlFor="unit">Unit *</Label>
             <Select
               value={formData.unit}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, unit: value }))}
+              onValueChange={(value) =>
+                setFormData((prev) => ({ ...prev, unit: value }))
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select unit" />
               </SelectTrigger>
               <SelectContent>
-                {units.map(unit => (
-                  <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                {units.map((unit) => (
+                  <SelectItem key={unit} value={unit}>
+                    {unit}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -175,7 +229,12 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
               min="0"
               step="0.01"
               value={formData.price}
-              onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  price: parseFloat(e.target.value) || 0,
+                }))
+              }
               required
             />
           </div>
@@ -186,7 +245,12 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
               id="expiryDate"
               type="date"
               value={formData.expiryDate || ""}
-              onChange={(e) => setFormData(prev => ({ ...prev, expiryDate: e.target.value || undefined }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  expiryDate: e.target.value || undefined,
+                }))
+              }
             />
           </div>
 
@@ -194,7 +258,10 @@ export function InventoryForm({ isOpen, onClose, onSubmit, initialData }: Readon
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-gradient-primary hover:opacity-90">
+            <Button
+              type="submit"
+              className="bg-gradient-primary hover:opacity-90"
+            >
               {formData.id ? "Update Item" : "Add Item"}
             </Button>
           </DialogFooter>

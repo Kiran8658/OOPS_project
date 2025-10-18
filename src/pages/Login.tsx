@@ -9,11 +9,11 @@ interface LoginProps {
 
 interface User {
   username: string;
-  email: string;
+  email?: string;
   password: string;
 }
 
-export default function Login({ onLogin }: Readonly<LoginProps>) {
+export default function Login({ onLogin }: LoginProps) {
   const [isRegister, setIsRegister] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -22,13 +22,13 @@ export default function Login({ onLogin }: Readonly<LoginProps>) {
   const [error, setError] = useState("");
   const [users, setUsers] = useState<User[]>([]);
 
-  // Load saved users
+  // Load saved users from localStorage
   useEffect(() => {
     const storedUsers = localStorage.getItem("users");
     if (storedUsers) setUsers(JSON.parse(storedUsers));
   }, []);
 
-  // Save users
+  // Save users to localStorage
   const saveUsers = (updatedUsers: User[]) => {
     localStorage.setItem("users", JSON.stringify(updatedUsers));
     setUsers(updatedUsers);
@@ -71,14 +71,13 @@ export default function Login({ onLogin }: Readonly<LoginProps>) {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
-      {/* Header / Hero section like landing page */}
+      {/* Header / Hero */}
       <motion.div
         initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="text-center mb-10"
       >
-
         <h1 className="mt-4 text-4xl font-extrabold text-gray-800">
           {isRegister ? "Create Your Account" : "Smart Shelf Management System"}
         </h1>
@@ -153,11 +152,9 @@ export default function Login({ onLogin }: Readonly<LoginProps>) {
             </div>
           )}
 
-          {/* Error */}
+          {/* Error message */}
           {error && (
-            <p className="text-sm text-red-600 text-center font-medium">
-              {error}
-            </p>
+            <p className="text-sm text-red-600 text-center font-medium">{error}</p>
           )}
 
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
@@ -170,7 +167,7 @@ export default function Login({ onLogin }: Readonly<LoginProps>) {
           </motion.div>
         </form>
 
-        {/* Toggle */}
+        {/* Toggle register/login */}
         <p className="mt-6 text-center text-sm text-gray-600">
           {isRegister ? "Already have an account?" : "Don’t have an account?"}{" "}
           <button

@@ -11,7 +11,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
   Select,
@@ -26,7 +26,7 @@ import {
   Edit,
   Trash2,
   AlertTriangle,
-  Package
+  Package,
 } from "lucide-react";
 import { InventoryForm } from "@/components/InventoryForm";
 
@@ -44,13 +44,28 @@ interface InventoryItem {
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "in-stock":
-      return <Badge variant="secondary" className="bg-success/10 text-success">In Stock</Badge>;
+      return (
+        <Badge variant="secondary" className="bg-success/10 text-success">
+          In Stock
+        </Badge>
+      );
     case "low-stock":
-      return <Badge variant="outline" className="border-warning text-warning">Low Stock</Badge>;
+      return (
+        <Badge variant="outline" className="border-warning text-warning">
+          Low Stock
+        </Badge>
+      );
     case "out-of-stock":
       return <Badge variant="destructive">Out of Stock</Badge>;
     case "expiring-soon":
-      return <Badge variant="outline" className="border-destructive text-destructive">Expiring Soon</Badge>;
+      return (
+        <Badge
+          variant="outline"
+          className="border-destructive text-destructive"
+        >
+          Expiring Soon
+        </Badge>
+      );
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
@@ -65,15 +80,26 @@ export default function Inventory() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
-  const API_URL = "http://localhost:8080/api/inventory"; // your backend endpoint
+  const API_URL = "http://localhost:8080/api/inventory";
 
   // Fetch inventory from backend
   const fetchInventory = async () => {
     try {
       const response = await axios.get(API_URL);
-      setInventory(response.data);
+      console.log("Fetched inventory:", response.data); // ✅ Debug log
+
+      // ✅ Fix: handle both array and object formats safely
+      if (Array.isArray(response.data)) {
+        setInventory(response.data);
+      } else if (Array.isArray(response.data.inventory)) {
+        setInventory(response.data.inventory);
+      } else {
+        console.error("Unexpected response format:", response.data);
+        setInventory([]);
+      }
     } catch (error) {
       console.error("Error fetching inventory:", error);
+      setInventory([]); // ✅ Prevent .filter() crash on error
     }
   };
 
@@ -88,7 +114,7 @@ export default function Inventory() {
       setIsFormOpen(true);
       setEditingItem(null);
     } else if (edit) {
-      const itemToEdit = inventory.find(item => item.id === edit);
+      const itemToEdit = inventory.find((item) => item.id === edit);
       if (itemToEdit) {
         setEditingItem(itemToEdit);
         setIsFormOpen(true);
@@ -99,15 +125,27 @@ export default function Inventory() {
     }
   }, [searchParams, inventory]);
 
-  const filteredInventory = inventory.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
-    const matchesStatus = statusFilter === "all" || item.status === statusFilter;
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
+  // ✅ Fix: Ensure inventory is always an array before filtering
+  const filteredInventory = Array.isArray(inventory)
+    ? inventory.filter((item) => {
+        const matchesSearch = item.name
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+        const matchesCategory =
+          categoryFilter === "all" || item.category === categoryFilter;
+        const matchesStatus =
+          statusFilter === "all" || item.status === statusFilter;
+        return matchesSearch && matchesCategory && matchesStatus;
+      })
+    : [];
 
-  const categories = [...new Set(inventory.map(item => item.category))];
-  const statuses = [...new Set(inventory.map(item => item.status))];
+  const categories = Array.isArray(inventory)
+    ? [...new Set(inventory.map((item) => item.category))]
+    : [];
+
+  const statuses = Array.isArray(inventory)
+    ? [...new Set(inventory.map((item) => item.status))]
+    : [];
 
   const handleAddClick = () => {
     setSearchParams({ add: "true" });
@@ -121,7 +159,7 @@ export default function Inventory() {
     if (window.confirm("Are you sure you want to delete this item?")) {
       try {
         await axios.delete(`${API_URL}/${id}`);
-        setInventory(prev => prev.filter(item => item.id !== id));
+        setInventory((prev) => prev.filter((item) => item.id !== id));
       } catch (error) {
         console.error("Error deleting item:", error);
       }
@@ -131,13 +169,13 @@ export default function Inventory() {
   const handleFormSubmit = async (item: InventoryItem) => {
     try {
       if (item.id) {
-        // Edit existing
         const response = await axios.put(`${API_URL}/${item.id}`, item);
-        setInventory(prev => prev.map(i => (i.id === item.id ? response.data : i)));
+        setInventory((prev) =>
+          prev.map((i) => (i.id === item.id ? response.data : i))
+        );
       } else {
-        // Add new
         const response = await axios.post(API_URL, item);
-        setInventory(prev => [...prev, response.data]);
+        setInventory((prev) => [...prev, response.data]);
       }
       setSearchParams({});
     } catch (error) {
@@ -154,10 +192,14 @@ export default function Inventory() {
             Inventory Management
           </h1>
           <p className="text-muted-foreground mt-2">
-            Manage your stock levels, track expiry dates, and monitor inventory status.
+            Manage your stock levels, track expiry dates, and monitor inventory
+            status.
           </p>
         </div>
-        <Button onClick={handleAddClick} className="bg-gradient-primary hover:opacity-90 text-white">
+        <Button
+          onClick={handleAddClick}
+          className="bg-gradient-primary hover:opacity-90 text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Add New Item
         </Button>
@@ -176,7 +218,7 @@ export default function Inventory() {
                 className="pl-9"
               />
             </div>
-            
+
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Filter by category" />
@@ -184,7 +226,9 @@ export default function Inventory() {
               <SelectContent>
                 <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -197,7 +241,12 @@ export default function Inventory() {
                 <SelectItem value="all">All Status</SelectItem>
                 {statuses.map((status) => (
                   <SelectItem key={status} value={status}>
-                    {status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                    {status
+                      .split("-")
+                      .map(
+                        (word) => word.charAt(0).toUpperCase() + word.slice(1)
+                      )
+                      .join(" ")}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -246,11 +295,14 @@ export default function Inventory() {
                     <TableCell>₹{item.price}</TableCell>
                     <TableCell>
                       {item.expiryDate ? (
-                        <span className={
-                          new Date(item.expiryDate) < new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                            ? "text-destructive font-medium"
-                            : "text-muted-foreground"
-                        }>
+                        <span
+                          className={
+                            new Date(item.expiryDate) <
+                            new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+                              ? "text-destructive font-medium"
+                              : "text-muted-foreground"
+                          }
+                        >
                           {new Date(item.expiryDate).toLocaleDateString()}
                         </span>
                       ) : (
@@ -260,10 +312,19 @@ export default function Inventory() {
                     <TableCell>{getStatusBadge(item.status)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(item.id)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditClick(item.id)}
+                        >
                           <Edit className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDeleteClick(item.id)}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteClick(item.id)}
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
@@ -276,10 +337,11 @@ export default function Inventory() {
         </CardContent>
       </Card>
 
+      {/* ✅ Fixed this section */}
       <InventoryForm
         isOpen={isFormOpen}
         onClose={() => setSearchParams({})}
-        onSubmit={handleFormSubmit}
+        onSaved={handleFormSubmit} // ✅ corrected prop name
         initialData={editingItem}
       />
     </div>
