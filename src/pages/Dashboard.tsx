@@ -38,12 +38,14 @@ function DashboardStats() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/api/dashboard/stats");
+        const response = await axios.get("http://localhost:8080/api/dashboard/stats", {
+          withCredentials: true,
+        });
         if (response.data && typeof response.data === "object") {
           setStats({
-            totalRevenue: response.data.totalRevenue,
-            totalOrders: response.data.totalOrders,
-            inventoryItems: response.data.inventoryItems,
+            totalRevenue: response.data.totalRevenue || 0,
+            totalOrders: response.data.totalOrders || 0,
+            inventoryItems: response.data.inventoryItems || 0,
           });
           setError(null);
         } else {
@@ -115,7 +117,8 @@ export function RecentActivity() {
     const fetchActivities = async () => {
       try {
         const res = await axios.get<ActivityItem[]>(
-          "http://localhost:8080/api/dashboard/recent-activity"
+          "http://localhost:8080/api/dashboard/recent-activity",
+          { withCredentials: true }
         );
         if (Array.isArray(res.data)) {
           setActivities(res.data);
@@ -165,7 +168,9 @@ export function RecentActivity() {
   return (
     <Card className="col-span-1">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">Recent Activity</CardTitle>
+        <CardTitle className="text-lg font-semibold text-foreground">
+          Recent Activity
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {error && <p className="text-destructive text-sm mb-2">{error}</p>}
@@ -184,7 +189,9 @@ export function RecentActivity() {
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
                   {item.badge && (
-                    <Badge variant={item.badge.variant} className="ml-2 text-xs">{item.badge.text}</Badge>
+                    <Badge variant={item.badge.variant} className="ml-2 text-xs">
+                      {item.badge.text}
+                    </Badge>
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
