@@ -4,7 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
 import { AppSidebar } from "@/components/AppSidebar";
 import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
@@ -15,27 +16,22 @@ import Stores from "./pages/Stores";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
-
+import Register from "./pages/Register";
 const queryClient = new QueryClient();
 
 const AppContent = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const navigate = useNavigate();
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-    navigate("/");
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    navigate("/login");
-  };
+  const handleLogin = () => setIsAuthenticated(true);
+  const handleLogout = () => setIsAuthenticated(false);
 
   return (
     <>
       {!isAuthenticated ? (
-        <Login onLogin={handleLogin} />
+        <Routes>
+          <Route path="/login" element={<Login onLogin={handleLogin} />} />
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
       ) : (
         <SidebarProvider>
           <div className="min-h-screen flex w-full bg-background">
@@ -50,6 +46,8 @@ const AppContent = () => {
                 <Route path="/stores" element={<Stores />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<NotFound />} />
+                <Route path="/login" element={<Login onLogin={handleLogin} />} />
+                <Route path="/register" element={<Register onRegister={handleLogin} />} />
               </Routes>
             </main>
           </div>

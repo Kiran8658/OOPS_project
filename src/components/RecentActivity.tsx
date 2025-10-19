@@ -6,7 +6,9 @@ import { useNavigate } from "react-router-dom";
 import { ShoppingCart, Package, AlertTriangle, TrendingUp } from "lucide-react";
 import axios, { AxiosError } from "axios";
 
-// Define the shape of each activity item from backend
+// ---------------------------
+// ✅ Activity Item Type
+// ---------------------------
 interface ActivityItem {
   id: string;
   type: "order" | "inventory" | "alert" | "analytics";
@@ -19,33 +21,44 @@ interface ActivityItem {
   };
 }
 
+// ---------------------------
+// ✅ RecentActivity Component
+// ---------------------------
 export function RecentActivity() {
   const navigate = useNavigate();
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Base API URL
+  const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080/api";
+
+  // ---------------------------
   // Fetch activities from backend
+  // ---------------------------
   useEffect(() => {
     const fetchActivities = async () => {
       try {
-        const response = await axios.get<ActivityItem[]>(
-          "http://localhost:8080/api/dashboard/recent-activity",
-          { withCredentials: true } // in case you use cookies
-        );
-        setActivities(response.data);
-        setLoading(false);
+        const response = await axios.get<ActivityItem[]>(`${BASE_URL}/dashboard/recent-activity`);
+        if (Array.isArray(response.data)) {
+          setActivities(response.data);
+        } else {
+          setError("Unexpected response from backend.");
+        }
       } catch (err) {
         const axiosError = err as AxiosError;
-        setError(axiosError.message);
+        setError(axiosError.message || "Failed to fetch activities.");
+      } finally {
         setLoading(false);
       }
     };
 
     fetchActivities();
-  }, []);
+  }, [BASE_URL]);
 
-  // Navigate based on activity type
+  // ---------------------------
+  // Navigate on click
+  // ---------------------------
   const handleActivityClick = (type: ActivityItem["type"]) => {
     const routeMap: Record<ActivityItem["type"], string> = {
       order: "/orders",
@@ -56,7 +69,9 @@ export function RecentActivity() {
     navigate(routeMap[type]);
   };
 
+  // ---------------------------
   // Render correct icon
+  // ---------------------------
   const getActivityIcon = (type: ActivityItem["type"]) => {
     switch (type) {
       case "order":
@@ -72,6 +87,9 @@ export function RecentActivity() {
     }
   };
 
+  // ---------------------------
+  // Render UI
+  // ---------------------------
   if (loading) {
     return (
       <Card className="col-span-1 shadow-sm">
@@ -89,7 +107,7 @@ export function RecentActivity() {
         <CardHeader>
           <CardTitle>Recent Activity</CardTitle>
         </CardHeader>
-        <CardContent>Error: {error}</CardContent>
+        <CardContent className="text-destructive text-sm">{error}</CardContent>
       </Card>
     );
   }
@@ -119,18 +137,14 @@ export function RecentActivity() {
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {item.title}
-                  </p>
+                  <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
                   {item.badge && (
                     <Badge variant={item.badge.variant} className="ml-2 text-xs">
                       {item.badge.text}
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1 truncate">
-                  {item.description}
-                </p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">{item.description}</p>
                 <p className="text-xs text-muted-foreground mt-1">{item.time}</p>
               </div>
             </button>

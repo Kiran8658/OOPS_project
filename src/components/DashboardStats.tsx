@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
-// ✅ Create Axios instance
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api/dashboard/stats",
-});
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   TrendingUp,
   TrendingDown,
@@ -17,9 +13,18 @@ import {
   RefreshCw,
   Filter,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { StatDetailModal } from "./StatDetailModal";
 
+// -------------------
+// ✅ Axios instance
+// -------------------
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
+});
+
+// -------------------
+// ✅ Stat Card Component
+// -------------------
 interface StatCardProps {
   title: string;
   value: string;
@@ -74,6 +79,9 @@ const StatCard = ({ title, value, change, changeType, icon, description, onClick
   );
 };
 
+// -------------------
+// ✅ Dashboard Stats Component
+// -------------------
 interface DashboardStatsData {
   totalRevenue?: number;
   totalOrders?: number;
@@ -92,16 +100,18 @@ export function DashboardStats() {
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
   const [filterDateRange, setFilterDateRange] = useState("Last Month");
 
+  // -------------------
+  // ✅ Fetch stats from backend
+  // -------------------
   const fetchStats = async () => {
     try {
       setLoading(true);
-      // 🔥 Use Axios instance without double /api
-      const res = await api.get("/dashboard/stats");
+      const res = await api.get("/dashboard/stats"); // correct endpoint
       setStats(res.data);
     } catch (err) {
       console.error("❌ Failed to fetch dashboard stats:", err);
       alert("Failed to load stats from backend. Check your server.");
-      setStats(null); // fallback to null
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -111,6 +121,9 @@ export function DashboardStats() {
     fetchStats();
   }, []);
 
+  // -------------------
+  // ✅ Modal handlers
+  // -------------------
   const openModal = (title: string) => {
     setSelectedStat(title);
     setModalOpen(true);
@@ -147,6 +160,9 @@ export function DashboardStats() {
     "Low Stock Alerts": `Current alerts: ${s.lowStockAlerts}\nNew alerts: ${s.newAlerts}`,
   };
 
+  // -------------------
+  // ✅ Render
+  // -------------------
   return (
     <>
       <div className="flex justify-between items-center mb-4">
@@ -163,10 +179,12 @@ export function DashboardStats() {
         </div>
       </div>
 
+      {loading && <p className="text-sm text-muted-foreground mb-2">Loading stats...</p>}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatCard
           title="Total Revenue"
-          value={`₹${s.totalRevenue?.toLocaleString() ?? "0"}`}
+          value={`₹${s.totalRevenue?.toLocaleString()}`}
           change={`+${s.revenueChange ?? 0}% from last month`}
           changeType={s.revenueChange! >= 0 ? "positive" : "negative"}
           icon={<DollarSign className="w-5 h-5" />}

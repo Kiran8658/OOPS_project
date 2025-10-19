@@ -1,16 +1,14 @@
-import { useState, useEffect } from "react";
+// src/pages/Login.tsx
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { login as loginUser, register as registerUser } from "../api/AuthService"; // ✅ correct named imports
+import { useNavigate } from "react-router-dom";
+
 interface LoginProps {
   onLogin: () => void;
-}
-
-interface User {
-  username: string;
-  email?: string;
-  password: string;
 }
 
 export default function Login({ onLogin }: LoginProps) {
@@ -20,58 +18,55 @@ export default function Login({ onLogin }: LoginProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Load saved users from localStorage
-  useEffect(() => {
-    const storedUsers = localStorage.getItem("users");
-    if (storedUsers) setUsers(JSON.parse(storedUsers));
-  }, []);
+  const navigate = useNavigate();
 
-  // Save users to localStorage
-  const saveUsers = (updatedUsers: User[]) => {
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    setUsers(updatedUsers);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
-    if (isRegister) {
-      if (password !== confirmPassword) {
-        setError("Passwords do not match!");
-        return;
-      }
-      if (users.find((u) => u.username === username)) {
-        setError("Username already exists!");
-        return;
-      }
+    try {
+      if (isRegister) {
+        // Registration flow
+        if (password !== confirmPassword) {
+          setError("Passwords do not match!");
+          setLoading(false);
+          return;
+        }
 
-      const newUser: User = { username, email, password };
-      saveUsers([...users, newUser]);
-      alert("🎉 Registration successful! Please login.");
-      setIsRegister(false);
-      setUsername("");
-      setEmail("");
-      setPassword("");
-      setConfirmPassword("");
-    } else {
-      const existingUser = users.find(
-        (u) => u.username === username && u.password === password
-      );
-      if (!existingUser) {
-        setError("Invalid username or password!");
-        return;
+        await registerUser({ username, password, email });
+        alert("🎉 Registration successful! Please login.");
+        setIsRegister(false);
+        setUsername("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+      } else {
+        // Login flow
+        const response = await loginUser({ username, password });
+
+        if (response?.username) {
+          onLogin(); // update App.tsx authentication state
+          alert(`👋 Welcome back, ${response.username}!`);
+          setUsername("");
+          setPassword("");
+          navigate("/"); // go to dashboard
+        } else {
+          setError("Invalid username or password!");
+        }
       }
-      alert(`👋 Welcome back, ${existingUser.username}!`);
-      onLogin();
+    } catch (err: any) {
+      setError(err?.message || "An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-gray-100 to-gray-200">
-      {/* Header / Hero */}
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -109,7 +104,7 @@ export default function Login({ onLogin }: LoginProps) {
             />
           </div>
 
-          {/* Email (only register) */}
+          {/* Email (register only) */}
           {isRegister && (
             <div>
               <Label htmlFor="email">Email</Label>
@@ -137,7 +132,7 @@ export default function Login({ onLogin }: LoginProps) {
             />
           </div>
 
-          {/* Confirm Password (only register) */}
+          {/* Confirm Password (register only) */}
           {isRegister && (
             <div>
               <Label htmlFor="confirmPassword">Confirm Password</Label>
@@ -152,22 +147,30 @@ export default function Login({ onLogin }: LoginProps) {
             </div>
           )}
 
-          {/* Error message */}
+          {/* Error Message */}
           {error && (
             <p className="text-sm text-red-600 text-center font-medium">{error}</p>
           )}
 
+          {/* Submit Button */}
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Button
               type="submit"
               className="w-full bg-black text-white hover:bg-gray-800"
+              disabled={loading}
             >
-              {isRegister ? "Register" : "Login"}
+              {loading
+                ? isRegister
+                  ? "Registering..."
+                  : "Logging in..."
+                : isRegister
+                ? "Register"
+                : "Login"}
             </Button>
           </motion.div>
         </form>
 
-        {/* Toggle register/login */}
+        {/* Toggle login/register */}
         <p className="mt-6 text-center text-sm text-gray-600">
           {isRegister ? "Already have an account?" : "Don’t have an account?"}{" "}
           <button

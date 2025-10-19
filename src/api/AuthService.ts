@@ -1,42 +1,40 @@
+// src/api/auth.ts
 import axios from "axios";
 
-// Base URL of your backend auth endpoints
+// Base URL for your backend auth endpoints
 const API_URL = "http://localhost:8080/api/auth";
+
+export interface AuthUser {
+  username: string;
+  password: string;
+  email?: string; // Optional for login, required for registration
+}
 
 /**
  * Register a new user
- * @param user Object containing username, email, password
- * @returns Axios response
  */
-export const register = async (user: { username: string; email: string; password: string }) => {
+export const register = async (user: AuthUser) => {
   try {
     const response = await axios.post(`${API_URL}/register`, user, {
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
-    return response.data;
+    return response.data; // returns the saved user object without password
   } catch (error: any) {
-    // Throw backend error for the frontend to handle
-    throw error.response?.data || "Registration failed";
+    // Backend sends { "error": "message" } or ResponseEntity body
+    throw new Error(error.response?.data?.error || "Registration failed");
   }
 };
 
 /**
  * Login an existing user
- * @param user Object containing email and password
- * @returns Axios response
  */
-export const login = async (user: { email: string; password: string }) => {
+export const login = async (user: AuthUser) => {
   try {
     const response = await axios.post(`${API_URL}/login`, user, {
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
     });
-    return response.data;
+    return response.data; // returns the user object without password
   } catch (error: any) {
-    // Throw backend error for the frontend to handle
-    throw error.response?.data || "Login failed";
+    throw new Error(error.response?.data?.error || "Login failed");
   }
 };
