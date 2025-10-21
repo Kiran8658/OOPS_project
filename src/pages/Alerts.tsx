@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   Clock,
   Package,
-  TrendingDown,
+  TrendingUp,
   Search,
   Settings,
   Bell,
@@ -89,30 +89,31 @@ const initialAlerts: Alert[] = [
 ];
 
 const getAlertIcon = (type: string) => {
+  const iconClass = "w-5 h-5 text-gray-700";
   switch (type) {
     case "low-stock":
-      return <Package className="w-5 h-5" />;
+      return <Package className={iconClass} />;
     case "expiry":
-      return <Clock className="w-5 h-5" />;
+      return <Clock className={iconClass} />;
     case "high-demand":
-      return <TrendingDown className="w-5 h-5" />;
+      return <TrendingUp className={iconClass} />;
     case "predictive":
-      return <Zap className="w-5 h-5" />;
+      return <Zap className={iconClass} />;
     case "system":
-      return <Settings className="w-5 h-5" />;
+      return <Settings className={iconClass} />;
     default:
-      return <Bell className="w-5 h-5" />;
+      return <Bell className={iconClass} />;
   }
 };
 
 const getPriorityBadge = (priority: string) => {
   switch (priority) {
     case "high":
-      return <Badge className="bg-destructive/10 text-destructive border-destructive/20">High Priority</Badge>;
+      return <Badge className="bg-red-100 text-red-700 border-red-300">High Priority</Badge>;
     case "medium":
-      return <Badge className="bg-warning/10 text-warning border-warning/20">Medium Priority</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-300">Medium Priority</Badge>;
     case "low":
-      return <Badge className="bg-success/10 text-success border-success/20">Low Priority</Badge>;
+      return <Badge className="bg-green-100 text-green-700 border-green-300">Low Priority</Badge>;
     default:
       return <Badge variant="outline">{priority}</Badge>;
   }
@@ -121,15 +122,15 @@ const getPriorityBadge = (priority: string) => {
 const getTypeBadge = (type: string) => {
   switch (type) {
     case "low-stock":
-      return <Badge className="bg-destructive/10 text-destructive">Low Stock</Badge>;
+      return <Badge className="bg-red-100 text-red-700">Low Stock</Badge>;
     case "expiry":
-      return <Badge className="bg-warning/10 text-warning">Expiry</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-700">Expiry</Badge>;
     case "high-demand":
-      return <Badge className="bg-info/10 text-info">High Demand</Badge>;
+      return <Badge className="bg-blue-100 text-blue-700">High Demand</Badge>;
     case "predictive":
-      return <Badge className="bg-primary/10 text-primary">AI Prediction</Badge>;
+      return <Badge className="bg-indigo-100 text-indigo-700">AI Prediction</Badge>;
     case "system":
-      return <Badge className="bg-muted/10 text-muted-foreground">System</Badge>;
+      return <Badge className="bg-gray-100 text-gray-700">System</Badge>;
     default:
       return <Badge variant="outline">{type}</Badge>;
   }
@@ -146,7 +147,6 @@ export default function Alerts() {
                          alert.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "all" || alert.type === typeFilter;
     const matchesPriority = priorityFilter === "all" || alert.priority === priorityFilter;
-
     return matchesSearch && matchesType && matchesPriority;
   });
 
@@ -175,92 +175,80 @@ export default function Alerts() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-gray-900">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-            Smart Alerts
-          </h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold text-gray-800">Smart Alerts</h1>
+          <p className="text-gray-600 mt-2">
             AI-powered notifications and predictive insights for your business.
           </p>
         </div>
-        <Button className="bg-gradient-primary hover:opacity-90 text-white">
+        <Button className="bg-blue-600 hover:bg-blue-700 text-white">
           <Settings className="w-4 h-4 mr-2" />
           Alert Settings
         </Button>
       </div>
 
-      {/* Alert Summary Cards */}
+      {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gradient-primary text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/80 text-sm">Total Alerts</p>
-                <p className="text-2xl font-bold">{alerts.length}</p>
-              </div>
-              <Bell className="w-8 h-8 text-white/80" />
+        <Card className="bg-white border shadow-sm">
+          <CardContent className="p-6 flex justify-between items-center">
+            <div>
+              <p className="text-gray-600 text-sm">Total Alerts</p>
+              <p className="text-2xl font-bold text-gray-900">{alerts.length}</p>
             </div>
+            <Bell className="w-8 h-8 text-blue-600" />
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-accent text-accent-foreground">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-accent-foreground/80 text-sm">Unread</p>
-                <p className="text-2xl font-bold">{unreadCount}</p>
-              </div>
-              <Eye className="w-8 h-8 text-accent-foreground/80" />
+        <Card className="bg-white border shadow-sm">
+          <CardContent className="p-6 flex justify-between items-center">
+            <div>
+              <p className="text-gray-600 text-sm">Unread</p>
+              <p className="text-2xl font-bold text-gray-900">{unreadCount}</p>
             </div>
+            <Eye className="w-8 h-8 text-indigo-600" />
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-secondary text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/80 text-sm">High Priority</p>
-                <p className="text-2xl font-bold">{highPriorityCount}</p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-white/80" />
+        <Card className="bg-white border shadow-sm">
+          <CardContent className="p-6 flex justify-between items-center">
+            <div>
+              <p className="text-gray-600 text-sm">High Priority</p>
+              <p className="text-2xl font-bold text-gray-900">{highPriorityCount}</p>
             </div>
+            <AlertTriangle className="w-8 h-8 text-red-600" />
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-info text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/80 text-sm">Action Required</p>
-                <p className="text-2xl font-bold">{actionRequiredCount}</p>
-              </div>
-              <Zap className="w-8 h-8 text-white/80" />
+        <Card className="bg-white border shadow-sm">
+          <CardContent className="p-6 flex justify-between items-center">
+            <div>
+              <p className="text-gray-600 text-sm">Action Required</p>
+              <p className="text-2xl font-bold text-gray-900">{actionRequiredCount}</p>
             </div>
+            <Zap className="w-8 h-8 text-yellow-600" />
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card>
+      <Card className="bg-white border">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search alerts..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+              <Input
+                placeholder="Search alerts..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 border-gray-300"
+              />
             </div>
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="w-full md:w-48 border-gray-300">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>
@@ -274,14 +262,14 @@ export default function Alerts() {
             </Select>
 
             <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="w-full md:w-48 border-gray-300">
                 <SelectValue placeholder="Filter by priority" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Priorities</SelectItem>
-                <SelectItem value="high">High Priority</SelectItem>
-                <SelectItem value="medium">Medium Priority</SelectItem>
-                <SelectItem value="low">Low Priority</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="medium">Medium</SelectItem>
+                <SelectItem value="low">Low</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -289,10 +277,10 @@ export default function Alerts() {
       </Card>
 
       {/* Alerts List */}
-      <Card>
+      <Card className="bg-white border shadow-sm">
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <Bell className="w-5 h-5 mr-2 text-primary" />
+          <CardTitle className="flex items-center text-gray-800">
+            <Bell className="w-5 h-5 mr-2 text-blue-600" />
             Alerts ({filteredAlerts.length})
           </CardTitle>
         </CardHeader>
@@ -301,52 +289,48 @@ export default function Alerts() {
             {filteredAlerts.map((alert) => (
               <div
                 key={alert.id}
-                className={`p-4 border rounded-lg hover:bg-muted/50 transition-colors ${
-                  !alert.isRead ? 'bg-primary/5 border-primary/20' : ''
+                className={`p-4 border rounded-lg transition-colors ${
+                  !alert.isRead ? "bg-blue-50 border-blue-200" : "bg-white"
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3 flex-1">
-                    <div className={`p-2 rounded-lg ${
-                      alert.priority === 'high' ? 'bg-destructive/10 text-destructive' :
-                      alert.priority === 'medium' ? 'bg-warning/10 text-warning' :
-                      'bg-success/10 text-success'
-                    }`}>
-                      {getAlertIcon(alert.type)}
-                    </div>
-
+                    <div className="p-2 bg-gray-100 rounded-lg">{getAlertIcon(alert.type)}</div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium">{alert.title}</h4>
-                        {!alert.isRead && (
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                        )}
+                        <h4 className="font-semibold text-gray-900">{alert.title}</h4>
+                        {!alert.isRead && <div className="w-2 h-2 bg-blue-600 rounded-full"></div>}
                       </div>
-                      <p className="text-muted-foreground text-sm mb-2">{alert.description}</p>
+                      <p className="text-gray-700 text-sm mb-2">{alert.description}</p>
                       <div className="flex items-center gap-2 flex-wrap">
                         {getTypeBadge(alert.type)}
                         {getPriorityBadge(alert.priority)}
                         {alert.actionRequired && (
-                          <Badge className="bg-warning/10 text-warning">Action Required</Badge>
+                          <Badge className="bg-yellow-100 text-yellow-700">Action Required</Badge>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 ml-4">
-                    <span className="text-xs text-muted-foreground">
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-xs text-gray-500">
                       {new Date(alert.timestamp).toLocaleString()}
                     </span>
                     <div className="flex gap-1">
                       {alert.actionRequired && (
-                        <Button size="sm" className="bg-gradient-primary text-white" onClick={() => takeAction(alert.id)}>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => takeAction(alert.id)}>
                           Take Action
                         </Button>
                       )}
                       <Button variant="ghost" size="sm" onClick={() => toggleRead(alert.id)}>
-                        {alert.isRead ? <CheckCircle className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {alert.isRead ? <CheckCircle className="w-4 h-4 text-gray-600" /> : <Eye className="w-4 h-4 text-blue-600" />}
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => deleteAlert(alert.id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => deleteAlert(alert.id)}
+                      >
                         <XCircle className="w-4 h-4" />
                       </Button>
                     </div>

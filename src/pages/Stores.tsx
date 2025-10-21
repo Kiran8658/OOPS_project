@@ -3,18 +3,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Store, 
-  Plus, 
-  Search, 
-  MapPin, 
+import {
+  Store,
+  Plus,
+  Search,
+  MapPin,
   Phone,
   Mail,
   Users,
@@ -22,9 +22,10 @@ import {
   Package,
   Edit,
   Trash2,
-  Eye
+  Eye,
 } from "lucide-react";
 
+// Mock data
 interface StoreData {
   id: string;
   name: string;
@@ -55,14 +56,14 @@ const mockStores: StoreData[] = [
     revenue: 125000,
     orders: 450,
     inventory: 1200,
-    rating: 4.8
+    rating: 4.8,
   },
   {
-    id: "ST002", 
+    id: "ST002",
     name: "MediCare Plus Pharmacy",
     address: "456 Health Avenue, Medical District",
     city: "Delhi",
-    phone: "+91 98765 43211", 
+    phone: "+91 98765 43211",
     email: "medicare@smartshelf.com",
     manager: "Dr. Priya Sharma",
     type: "medical",
@@ -70,7 +71,7 @@ const mockStores: StoreData[] = [
     revenue: 89000,
     orders: 320,
     inventory: 850,
-    rating: 4.9
+    rating: 4.9,
   },
   {
     id: "ST003",
@@ -78,14 +79,14 @@ const mockStores: StoreData[] = [
     address: "789 Green Street, Farmer's Market",
     city: "Bangalore",
     phone: "+91 98765 43212",
-    email: "freshveggie@smartshelf.com", 
+    email: "freshveggie@smartshelf.com",
     manager: "Amit Singh",
     type: "vegetables",
     status: "maintenance",
     revenue: 45000,
     orders: 180,
     inventory: 400,
-    rating: 4.5
+    rating: 4.5,
   },
   {
     id: "ST004",
@@ -95,40 +96,42 @@ const mockStores: StoreData[] = [
     phone: "+91 98765 43213",
     email: "stationery@smartshelf.com",
     manager: "Sunita Patel",
-    type: "stationery", 
+    type: "stationery",
     status: "active",
     revenue: 67000,
     orders: 290,
     inventory: 950,
-    rating: 4.6
-  }
+    rating: 4.6,
+  },
 ];
 
+// Utility badges
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "active":
-      return <Badge className="bg-success/10 text-success border-success/20">Active</Badge>;
+      return <Badge className="bg-green-100 text-green-700 border border-green-300">Active</Badge>;
     case "inactive":
-      return <Badge variant="destructive">Inactive</Badge>;
+      return <Badge className="bg-red-100 text-red-700 border border-red-300">Inactive</Badge>;
     case "maintenance":
-      return <Badge className="bg-warning/10 text-warning border-warning/20">Maintenance</Badge>;
+      return <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300">Maintenance</Badge>;
     default:
       return <Badge variant="outline">{status}</Badge>;
   }
 };
 
 const getTypeBadge = (type: string) => {
-  const typeColors = {
-    grocery: "bg-primary/10 text-primary",
-    medical: "bg-success/10 text-success", 
-    stationery: "bg-accent/10 text-accent-foreground",
-    vegetables: "bg-secondary/10 text-secondary-foreground",
-    general: "bg-muted/10 text-muted-foreground"
+  const colors: Record<string, string> = {
+    grocery: "bg-blue-100 text-blue-800",
+    medical: "bg-green-100 text-green-800",
+    stationery: "bg-purple-100 text-purple-800",
+    vegetables: "bg-emerald-100 text-emerald-800",
+    general: "bg-gray-100 text-gray-800",
   };
-  
-  return <Badge className={typeColors[type as keyof typeof typeColors] || "bg-muted/10 text-muted-foreground"}>
-    {type.charAt(0).toUpperCase() + type.slice(1)}
-  </Badge>;
+  return (
+    <Badge className={`${colors[type] || "bg-gray-100 text-gray-700"} border`}>
+      {type.charAt(0).toUpperCase() + type.slice(1)}
+    </Badge>
+  );
 };
 
 export default function Stores() {
@@ -137,32 +140,30 @@ export default function Stores() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const filteredStores = mockStores.filter((store) => {
-    const matchesSearch = store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         store.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         store.manager.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch =
+      store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      store.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      store.manager.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = typeFilter === "all" || store.type === typeFilter;
     const matchesStatus = statusFilter === "all" || store.status === statusFilter;
-    
     return matchesSearch && matchesType && matchesStatus;
   });
 
   const totalRevenue = mockStores.reduce((sum, store) => sum + store.revenue, 0);
-  const activeStores = mockStores.filter(store => store.status === "active").length;
+  const activeStores = mockStores.filter((store) => store.status === "active").length;
   const totalOrders = mockStores.reduce((sum, store) => sum + store.orders, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-gray-900">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-            Store Management
-          </h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold text-gray-900">Store Management</h1>
+          <p className="text-gray-600 mt-2">
             Manage all your SmartShelf-enabled stores from one central dashboard.
           </p>
         </div>
-        <Button className="bg-gradient-primary hover:opacity-90 text-white shadow-lg">
+        <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg">
           <Plus className="w-4 h-4 mr-2" />
           Add New Store
         </Button>
@@ -170,50 +171,50 @@ export default function Stores() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gradient-primary text-white">
+        <Card className="bg-blue-50 border border-blue-200">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between text-blue-900">
               <div>
-                <p className="text-white/80 text-sm">Total Stores</p>
+                <p className="text-sm">Total Stores</p>
                 <p className="text-2xl font-bold">{mockStores.length}</p>
               </div>
-              <Store className="w-8 h-8 text-white/80" />
+              <Store className="w-8 h-8 opacity-75" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-success text-white">
+        <Card className="bg-green-50 border border-green-200">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between text-green-900">
               <div>
-                <p className="text-white/80 text-sm">Active Stores</p>
+                <p className="text-sm">Active Stores</p>
                 <p className="text-2xl font-bold">{activeStores}</p>
               </div>
-              <Users className="w-8 h-8 text-white/80" />
+              <Users className="w-8 h-8 opacity-75" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-secondary text-white">
+        <Card className="bg-purple-50 border border-purple-200">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between text-purple-900">
               <div>
-                <p className="text-white/80 text-sm">Total Revenue</p>
+                <p className="text-sm">Total Revenue</p>
                 <p className="text-2xl font-bold">₹{totalRevenue.toLocaleString()}</p>
               </div>
-              <TrendingUp className="w-8 h-8 text-white/80" />
+              <TrendingUp className="w-8 h-8 opacity-75" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-accent text-accent-foreground">
+        <Card className="bg-amber-50 border border-amber-200">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between text-amber-900">
               <div>
-                <p className="text-accent-foreground/80 text-sm">Total Orders</p>
+                <p className="text-sm">Total Orders</p>
                 <p className="text-2xl font-bold">{totalOrders}</p>
               </div>
-              <Package className="w-8 h-8 text-accent-foreground/80" />
+              <Package className="w-8 h-8 opacity-75" />
             </div>
           </CardContent>
         </Card>
@@ -221,22 +222,20 @@ export default function Stores() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-6 bg-white">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Search stores by name, city, or manager..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search stores by name, city, or manager..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 border-gray-300 text-gray-800"
+              />
             </div>
-            
+
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="w-full md:w-48 text-gray-800 border-gray-300">
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
               <SelectContent>
@@ -250,7 +249,7 @@ export default function Stores() {
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
+              <SelectTrigger className="w-full md:w-48 text-gray-800 border-gray-300">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -264,15 +263,15 @@ export default function Stores() {
         </CardContent>
       </Card>
 
-      {/* Stores Grid */}
+      {/* Stores List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredStores.map((store) => (
-          <Card key={store.id} className="hover:shadow-lg transition-all duration-200">
+          <Card key={store.id} className="hover:shadow-md border border-gray-200 transition-all bg-white text-gray-900">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <Store className="w-5 h-5 text-primary" />
+                    <Store className="w-5 h-5 text-blue-600" />
                     {store.name}
                   </CardTitle>
                   <div className="flex items-center gap-2 mt-2">
@@ -282,68 +281,62 @@ export default function Stores() {
                 </div>
                 <div className="flex gap-1">
                   <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-4 h-4 text-gray-700" />
                   </Button>
                   <Button variant="ghost" size="sm">
-                    <Edit className="w-4 h-4" />
+                    <Edit className="w-4 h-4 text-blue-700" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Contact Info */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span>{store.address}, {store.city}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{store.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>{store.email}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <span>Manager: {store.manager}</span>
-                  </div>
-                </div>
 
-                {/* Performance Metrics */}
-                <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-primary">₹{store.revenue.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">Revenue</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-secondary">{store.orders}</p>
-                    <p className="text-xs text-muted-foreground">Orders</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-lg font-bold text-accent-foreground">{store.inventory}</p>
-                    <p className="text-xs text-muted-foreground">Items</p>
-                  </div>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 text-sm text-gray-700">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-500" />
+                  <span>{store.address}, {store.city}</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-gray-500" />
+                  <span>{store.phone}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-500" />
+                  <span>{store.email}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-gray-500" />
+                  <span>Manager: {store.manager}</span>
+                </div>
+              </div>
 
-                {/* Rating */}
-                <div className="flex items-center justify-between pt-2 border-t">
-                  <span className="text-sm text-muted-foreground">Customer Rating</span>
-                  <div className="flex items-center gap-1">
-                    <span className="font-medium">{store.rating}</span>
-                    <div className="flex">
-                      {[...Array(5)].map((_, i) => (
-                        <span key={i} className={`text-sm ${i < Math.floor(store.rating) ? 'text-warning' : 'text-muted'}`}>
-                          ★
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                <div className="text-center">
+                  <p className="text-lg font-bold text-blue-700">₹{store.revenue.toLocaleString()}</p>
+                  <p className="text-xs text-gray-500">Revenue</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-green-700">{store.orders}</p>
+                  <p className="text-xs text-gray-500">Orders</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-lg font-bold text-purple-700">{store.inventory}</p>
+                  <p className="text-xs text-gray-500">Items</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                <span className="text-sm text-gray-600">Customer Rating</span>
+                <div className="flex items-center gap-1">
+                  <span className="font-medium text-gray-800">{store.rating}</span>
+                  {[...Array(5)].map((_, i) => (
+                    <span key={i} className={`text-sm ${i < Math.floor(store.rating) ? "text-yellow-500" : "text-gray-300"}`}>
+                      ★
+                    </span>
+                  ))}
                 </div>
               </div>
             </CardContent>

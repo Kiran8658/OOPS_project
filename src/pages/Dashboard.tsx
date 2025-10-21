@@ -1,3 +1,4 @@
+// src/pages/Dashboard.tsx
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import axios from "axios";
 // ---------------------------
 export default function Dashboard() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       <DashboardStats />
       <RecentActivity />
     </div>
@@ -53,7 +54,14 @@ function DashboardStats() {
         }
       } catch (err) {
         console.error("Failed to load stats:", err);
-        setError("Failed to load stats from backend. Check your server.");
+        setError("Failed to load stats. Showing placeholder data.");
+
+        // Fallback data
+        setStats({
+          totalRevenue: 125000,
+          totalOrders: 180,
+          inventoryItems: 320,
+        });
       }
     };
 
@@ -68,26 +76,23 @@ function DashboardStats() {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {error ? (
-          <p className="text-destructive text-sm">{error}</p>
-        ) : (
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-muted-foreground text-sm">Total Revenue</p>
-              <p className="text-2xl font-bold text-primary">
-                ₹{stats.totalRevenue.toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-sm">Total Orders</p>
-              <p className="text-2xl font-bold text-secondary">{stats.totalOrders}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground text-sm">Total Items</p>
-              <p className="text-2xl font-bold text-accent">{stats.inventoryItems}</p>
-            </div>
+        {error && <p className="text-destructive text-sm mb-2">{error}</p>}
+        <div className="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p className="text-muted-foreground text-sm">Total Revenue</p>
+            <p className="text-2xl font-bold text-primary">
+              ₹{stats.totalRevenue.toLocaleString()}
+            </p>
           </div>
-        )}
+          <div>
+            <p className="text-muted-foreground text-sm">Total Orders</p>
+            <p className="text-2xl font-bold text-secondary">{stats.totalOrders}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground text-sm">Total Items</p>
+            <p className="text-2xl font-bold text-accent">{stats.inventoryItems}</p>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
@@ -129,7 +134,27 @@ export function RecentActivity() {
         }
       } catch (err) {
         console.error("Failed to fetch recent activity:", err);
-        setError("Failed to load recent activity. Check backend.");
+        setError("Failed to load recent activity. Showing placeholder data.");
+
+        // Fallback placeholder activities
+        setActivities([
+          {
+            id: "1",
+            type: "order",
+            title: "Order #123 completed",
+            description: "Customer order delivered successfully.",
+            time: "2 hours ago",
+            badge: { text: "Success", variant: "secondary" },
+          },
+          {
+            id: "2",
+            type: "inventory",
+            title: "Inventory updated",
+            description: "New stock added for item SKU-456.",
+            time: "5 hours ago",
+            badge: { text: "Updated", variant: "default" },
+          },
+        ]);
       }
     };
     fetchActivities();
@@ -183,7 +208,7 @@ export function RecentActivity() {
               onClick={() => handleActivityClick(item.type)}
             >
               <Avatar className="w-8 h-8 bg-muted">
-                <AvatarFallback className="bg-transparent">{getActivityIcon(item.type)}</AvatarFallback>
+                <AvatarFallback>{getActivityIcon(item.type)}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">

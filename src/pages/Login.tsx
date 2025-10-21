@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { login as loginUser, register as registerUser } from "../api/AuthService"; // ✅ correct named imports
+import { login as loginUser, register as registerUser } from "../api/AuthService";
 import { useNavigate } from "react-router-dom";
 
 interface LoginProps {
@@ -29,7 +29,7 @@ export default function Login({ onLogin }: LoginProps) {
 
     try {
       if (isRegister) {
-        // Registration flow
+        // Registration
         if (password !== confirmPassword) {
           setError("Passwords do not match!");
           setLoading(false);
@@ -44,15 +44,15 @@ export default function Login({ onLogin }: LoginProps) {
         setPassword("");
         setConfirmPassword("");
       } else {
-        // Login flow
+        // Login
         const response = await loginUser({ username, password });
 
         if (response?.username) {
-          onLogin(); // update App.tsx authentication state
-          alert(`👋 Welcome back, ${response.username}!`);
+          onLogin(); // Update authentication state
+          alert(`👋 Welcome, ${response.username}!`);
           setUsername("");
           setPassword("");
-          navigate("/"); // go to dashboard
+          navigate("/dashboard"); // Navigate to dashboard
         } else {
           setError("Invalid username or password!");
         }
@@ -101,6 +101,7 @@ export default function Login({ onLogin }: LoginProps) {
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
               required
+              autoComplete="username"
             />
           </div>
 
@@ -115,6 +116,7 @@ export default function Login({ onLogin }: LoginProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
+                autoComplete="email"
               />
             </div>
           )}
@@ -129,6 +131,7 @@ export default function Login({ onLogin }: LoginProps) {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
+              autoComplete="current-password"
             />
           </div>
 
@@ -143,6 +146,7 @@ export default function Login({ onLogin }: LoginProps) {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter your password"
                 required
+                autoComplete="current-password"
               />
             </div>
           )}

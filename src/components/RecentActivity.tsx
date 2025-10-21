@@ -40,14 +40,32 @@ export function RecentActivity() {
     const fetchActivities = async () => {
       try {
         const response = await axios.get<ActivityItem[]>(`${BASE_URL}/dashboard/recent-activity`);
-        if (Array.isArray(response.data)) {
+        if (Array.isArray(response.data) && response.data.length > 0) {
           setActivities(response.data);
         } else {
-          setError("Unexpected response from backend.");
+          setError("No recent activity found.");
         }
       } catch (err) {
         const axiosError = err as AxiosError;
-        setError(axiosError.message || "Failed to fetch activities.");
+        console.error("Failed to fetch activities:", axiosError);
+        setError("Failed to load recent activity. Backend might be down.");
+        // Optional: fallback mock data
+        setActivities([
+          {
+            id: "mock-1",
+            type: "order",
+            title: "New Order #1024",
+            description: "Order received from John Doe",
+            time: "2 mins ago",
+          },
+          {
+            id: "mock-2",
+            type: "inventory",
+            title: "Inventory Low",
+            description: "Product A is below threshold",
+            time: "1 hour ago",
+          },
+        ]);
       } finally {
         setLoading(false);
       }
@@ -90,28 +108,6 @@ export function RecentActivity() {
   // ---------------------------
   // Render UI
   // ---------------------------
-  if (loading) {
-    return (
-      <Card className="col-span-1 shadow-sm">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>Loading...</CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="col-span-1 shadow-sm">
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent className="text-destructive text-sm">{error}</CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="col-span-1 shadow-sm hover:shadow-md transition-shadow duration-300">
       <CardHeader>
@@ -121,35 +117,41 @@ export function RecentActivity() {
       </CardHeader>
 
       <CardContent>
-        <div className="space-y-4">
-          {activities.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-primary"
-              onClick={() => handleActivityClick(item.type)}
-            >
-              <Avatar className="w-8 h-8 bg-muted flex items-center justify-center">
-                <AvatarFallback className="bg-transparent">
-                  {getActivityIcon(item.type)}
-                </AvatarFallback>
-              </Avatar>
+        {loading ? (
+          <p className="text-muted-foreground text-sm">Loading recent activity...</p>
+        ) : error ? (
+          <p className="text-destructive text-sm">{error}</p>
+        ) : (
+          <div className="space-y-4">
+            {activities.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="flex items-start space-x-3 p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer w-full text-left focus:outline-none focus:ring-2 focus:ring-primary"
+                onClick={() => handleActivityClick(item.type)}
+              >
+                <Avatar className="w-8 h-8 bg-muted flex items-center justify-center">
+                  <AvatarFallback className="bg-transparent">
+                    {getActivityIcon(item.type)}
+                  </AvatarFallback>
+                </Avatar>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
-                  {item.badge && (
-                    <Badge variant={item.badge.variant} className="ml-2 text-xs">
-                      {item.badge.text}
-                    </Badge>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+                    {item.badge && (
+                      <Badge variant={item.badge.variant} className="ml-2 text-xs">
+                        {item.badge.text}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 truncate">{item.description}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{item.time}</p>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1 truncate">{item.description}</p>
-                <p className="text-xs text-muted-foreground mt-1">{item.time}</p>
-              </div>
-            </button>
-          ))}
-        </div>
+              </button>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

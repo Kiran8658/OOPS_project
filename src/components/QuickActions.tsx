@@ -31,20 +31,20 @@ const QuickAction: React.FC<QuickActionProps> = ({
   const getButtonClasses = () => {
     switch (variant) {
       case "primary":
-        return "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg hover:opacity-90";
+        return "bg-[hsl(var(--gradient-primary))] text-[hsl(var(--primary-foreground))] shadow-md hover:shadow-lg hover:opacity-90";
       case "secondary":
-        return "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md hover:shadow-lg hover:opacity-90";
+        return "bg-[hsl(var(--gradient-secondary))] text-[hsl(var(--secondary-foreground))] shadow-md hover:shadow-lg hover:opacity-90";
       case "accent":
-        return "bg-gradient-to-r from-pink-500 to-rose-600 text-white shadow-md hover:shadow-lg hover:opacity-90";
+        return "bg-[hsl(var(--gradient-accent))] text-[hsl(var(--accent-foreground))] shadow-md hover:shadow-lg hover:opacity-90";
       default:
-        return "bg-muted hover:bg-muted/80 text-foreground border border-border";
+        return "bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] border border-[hsl(var(--border))] hover:bg-[hsl(var(--muted))/80]";
     }
   };
 
   return (
     <Card
       onClick={onClick}
-      className="hover:shadow-lg transition-all duration-200 cursor-pointer group"
+      className="hover:shadow-lg transition-all duration-200 cursor-pointer group bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))]"
     >
       <CardContent className="p-5 flex items-center space-x-4">
         <Button
@@ -59,10 +59,10 @@ const QuickAction: React.FC<QuickActionProps> = ({
         </Button>
 
         <div className="flex-1 text-left">
-          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-[hsl(var(--foreground))] group-hover:text-[hsl(var(--primary))] transition-colors">
             {title}
           </h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-[hsl(var(--muted-foreground))] text-sm">{description}</p>
         </div>
       </CardContent>
     </Card>
@@ -116,9 +116,9 @@ export const QuickActions: React.FC = () => {
   ];
 
   return (
-    <Card className="shadow-sm hover:shadow-md transition-shadow">
+    <Card className="shadow-sm hover:shadow-md transition-shadow bg-[hsl(var(--card))] text-[hsl(var(--card-foreground))]">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold text-foreground">
+        <CardTitle className="text-lg font-semibold text-[hsl(var(--foreground))]">
           Quick Actions
         </CardTitle>
       </CardHeader>

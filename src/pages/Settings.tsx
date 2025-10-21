@@ -1,23 +1,28 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Settings, 
-  User, 
-  Bell, 
-  Shield, 
+import {
+  Settings,
+  User,
+  Bell,
+  Shield,
   Palette,
   Database,
   Wifi,
@@ -28,11 +33,13 @@ import {
   Monitor,
   Sun,
   Moon,
-  Smartphone,
-  Plus
+  Plus,
 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function SettingsPage() {
+  const { toast } = useToast();
+
   const [theme, setTheme] = useState("system");
   const [notifications, setNotifications] = useState({
     lowStock: true,
@@ -40,334 +47,273 @@ export default function SettingsPage() {
     highDemand: false,
     system: true,
     email: true,
-    sms: false
+    sms: false,
   });
 
+  // Apply theme on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme") || "system";
+    setTheme(savedTheme);
+    applyTheme(savedTheme);
+  }, []);
+
+  const applyTheme = (value: string) => {
+    document.documentElement.classList.remove("dark");
+    if (value === "dark") {
+      document.documentElement.classList.add("dark");
+    } else if (value === "system") {
+      const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+      if (darkQuery.matches) document.documentElement.classList.add("dark");
+    }
+  };
+
+  const handleThemeChange = (value: string) => {
+    setTheme(value);
+    applyTheme(value);
+    localStorage.setItem("theme", value);
+  };
+
+  const handleSave = () => {
+    localStorage.setItem("notifications", JSON.stringify(notifications));
+    toast({
+      title: "Settings Saved",
+      description: "Your preferences have been successfully updated.",
+    });
+  };
+
+  const handleExport = () => {
+    const blob = new Blob(["SmartShelf backup data"], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "smartshelf-backup.txt";
+    link.click();
+
+    toast({
+      title: "Data Exported",
+      description: "Your SmartShelf data has been exported successfully.",
+    });
+  };
+
+  const handleImport = () => {
+    toast({
+      title: "Import Data",
+      description: "Feature coming soon — data import will be supported shortly.",
+    });
+  };
+
+  const handleAddSensor = () => {
+    toast({
+      title: "New Sensor Added",
+      description: "A new IoT shelf sensor has been added to the network.",
+    });
+  };
+
+  const handleChangePassword = () => {
+    toast({
+      title: "Password Change",
+      description: "You will receive an email to reset your password.",
+    });
+  };
+
+  const handleTwoFactor = () => {
+    toast({
+      title: "2FA Enabled",
+      description: "Two-factor authentication is now active for your account.",
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    if (
+      window.confirm(
+        "⚠ Are you sure you want to delete your account? This action cannot be undone."
+      )
+    ) {
+      toast({
+        title: "Account Deleted",
+        description: "Your SmartShelf account and data have been deleted.",
+      });
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="p-8 space-y-8 bg-gradient-to-br from-indigo-50 to-white min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-hero bg-clip-text text-transparent">
-            Settings
-          </h1>
-          <p className="text-muted-foreground mt-2">
-            Configure your SmartShelf platform preferences and integrations.
-          </p>
-        </div>
-        <Button className="bg-gradient-primary hover:opacity-90 text-white">
-          <Save className="w-4 h-4 mr-2" />
-          Save Changes
-        </Button>
+      <div className="flex items-center space-x-3">
+        <Settings className="w-8 h-8 text-indigo-600" />
+        <h1 className="text-3xl font-semibold text-gray-800">Settings</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Settings Navigation */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm text-muted-foreground uppercase tracking-wide">
-                Settings Menu
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="secondary" className="w-full justify-start">
-                <User className="w-4 h-4 mr-2" />
-                Profile & Account
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Bell className="w-4 h-4 mr-2" />
-                Notifications
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Palette className="w-4 h-4 mr-2" />
-                Appearance
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Database className="w-4 h-4 mr-2" />
-                Data & Backup
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Wifi className="w-4 h-4 mr-2" />
-                Integrations
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Shield className="w-4 h-4 mr-2" />
-                Security
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      {/* Profile Settings */}
+      <Card className="shadow-lg border-0">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <User className="w-5 h-5 text-blue-600" />
+            <span>Profile Settings</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <div>
+            <Label>Full Name</Label>
+            <Input placeholder="John Doe" />
+          </div>
+          <div>
+            <Label>Email Address</Label>
+            <Input placeholder="john@example.com" type="email" />
+          </div>
+          <div>
+            <Label>Phone Number</Label>
+            <Input placeholder="+91 98765 43210" />
+          </div>
+          <div>
+            <Label>Role</Label>
+            <Input placeholder="Store Manager" disabled />
+          </div>
+          <div className="md:col-span-2 flex justify-end">
+            <Button
+              onClick={handleSave}
+              className="bg-gradient-to-r from-blue-600 to-indigo-500 hover:opacity-90 text-white shadow-md"
+            >
+              <Save className="w-4 h-4 mr-2" /> Save Changes
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-        {/* Main Settings Content */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Profile & Account */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <User className="w-5 h-5 mr-2 text-primary" />
-                Profile & Account
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input id="firstName" placeholder="Enter first name" defaultValue="John" />
+      {/* Theme Settings */}
+      <Card className="shadow-lg border-0">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <Palette className="w-5 h-5 text-purple-600" />
+            <span>Theme & Display</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Label>Theme</Label>
+          <Select value={theme} onValueChange={handleThemeChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select Theme" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">
+                <div className="flex items-center">
+                  <Sun className="w-4 h-4 mr-2" /> Light
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input id="lastName" placeholder="Enter last name" defaultValue="Doe" />
+              </SelectItem>
+              <SelectItem value="dark">
+                <div className="flex items-center">
+                  <Moon className="w-4 h-4 mr-2" /> Dark
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" placeholder="Enter email" defaultValue="john.doe@smartshelf.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" placeholder="Enter phone number" defaultValue="+91 98765 43210" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="businessName">Business Name</Label>
-                <Input id="businessName" placeholder="Enter business name" defaultValue="SmartShelf Demo Store" />
-              </div>
-            </CardContent>
-          </Card>
+              </SelectItem>
+              <SelectItem value="system">
+                <div className="flex items-center">
+                  <Monitor className="w-4 h-4 mr-2" /> System
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
 
-          {/* Appearance */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Palette className="w-5 h-5 mr-2 text-primary" />
-                Appearance
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Theme Preference</Label>
-                <Select value={theme} onValueChange={setTheme}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">
-                      <div className="flex items-center">
-                        <Sun className="w-4 h-4 mr-2" />
-                        Light Mode
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="dark">
-                      <div className="flex items-center">
-                        <Moon className="w-4 h-4 mr-2" />
-                        Dark Mode
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="system">
-                      <div className="flex items-center">
-                        <Monitor className="w-4 h-4 mr-2" />
-                        System Default
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Language</Label>
-                <Select defaultValue="en">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="hi">हिंदी (Hindi)</SelectItem>
-                    <SelectItem value="mr">मराठी (Marathi)</SelectItem>
-                    <SelectItem value="ta">தமிழ் (Tamil)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Notification Settings */}
+      <Card className="shadow-lg border-0">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <Bell className="w-5 h-5 text-yellow-600" />
+            <span>Notifications</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {Object.keys(notifications).map((key) => (
+            <div key={key} className="flex items-center justify-between">
+              <Label className="capitalize">{key.replace(/([A-Z])/g, " $1")}</Label>
+              <Switch
+                checked={notifications[key as keyof typeof notifications]}
+                onCheckedChange={(val) =>
+                  setNotifications((prev) => ({ ...prev, [key]: val }))
+                }
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
-          {/* Notifications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bell className="w-5 h-5 mr-2 text-primary" />
-                Notification Preferences
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Low Stock Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Get notified when items are running low</p>
-                  </div>
-                  <Switch 
-                    checked={notifications.lowStock}
-                    onCheckedChange={(checked) => setNotifications(prev => ({...prev, lowStock: checked}))}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Expiry Warnings</Label>
-                    <p className="text-sm text-muted-foreground">Alerts for products nearing expiry</p>
-                  </div>
-                  <Switch 
-                    checked={notifications.expiry}
-                    onCheckedChange={(checked) => setNotifications(prev => ({...prev, expiry: checked}))}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>High Demand Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Notifications for trending products</p>
-                  </div>
-                  <Switch 
-                    checked={notifications.highDemand}
-                    onCheckedChange={(checked) => setNotifications(prev => ({...prev, highDemand: checked}))}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive alerts via email</p>
-                  </div>
-                  <Switch 
-                    checked={notifications.email}
-                    onCheckedChange={(checked) => setNotifications(prev => ({...prev, email: checked}))}
-                  />
-                </div>
-                <Separator />
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>SMS Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive critical alerts via SMS</p>
-                  </div>
-                  <Switch 
-                    checked={notifications.sms}
-                    onCheckedChange={(checked) => setNotifications(prev => ({...prev, sms: checked}))}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Data Management */}
+      <Card className="shadow-lg border-0">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <Database className="w-5 h-5 text-green-600" />
+            <span>Data Management</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-4">
+          <Button variant="outline" className="h-auto p-4" onClick={handleExport}>
+            <Download className="w-6 h-6 mb-2" />
+            Export Data
+          </Button>
+          <Button variant="outline" className="h-auto p-4" onClick={handleImport}>
+            <Upload className="w-6 h-6 mb-2" />
+            Import Data
+          </Button>
+          <Button variant="outline" className="h-auto p-4" onClick={handleAddSensor}>
+            <Plus className="w-6 h-6 mb-2" />
+            Add New Sensor
+          </Button>
+        </CardContent>
+      </Card>
 
-          {/* SmartShelf Integration */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Wifi className="w-5 h-5 mr-2 text-primary" />
-                SmartShelf IoT Integration
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-                    <Wifi className="w-5 h-5 text-success" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Shelf Sensor #1</h4>
-                    <p className="text-sm text-muted-foreground">Grocery Section A</p>
-                  </div>
-                </div>
-                <Badge className="bg-success/10 text-success">Connected</Badge>
-              </div>
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-                    <Wifi className="w-5 h-5 text-warning" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">Shelf Sensor #2</h4>
-                    <p className="text-sm text-muted-foreground">Medicine Section</p>
-                  </div>
-                </div>
-                <Badge className="bg-warning/10 text-warning">Offline</Badge>
-              </div>
-              <Button className="w-full bg-gradient-primary text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Sensor
-              </Button>
-            </CardContent>
-          </Card>
+      {/* Security Settings */}
+      <Card className="shadow-lg border-0">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <Shield className="w-5 h-5 text-red-600" />
+            <span>Security</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" onClick={handleChangePassword}>
+              Change Password
+            </Button>
+            <Button variant="outline" onClick={handleTwoFactor}>
+              Enable 2FA
+            </Button>
+          </div>
+          <Separator className="my-2" />
+          <Button variant="destructive" onClick={handleDeleteAccount}>
+            <Trash2 className="w-4 h-4 mr-2" /> Delete Account
+          </Button>
+        </CardContent>
+      </Card>
 
-          {/* Data & Backup */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Database className="w-5 h-5 mr-2 text-primary" />
-                Data & Backup
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button variant="outline" className="h-auto p-4">
-                  <div className="flex flex-col items-center">
-                    <Download className="w-6 h-6 mb-2" />
-                    <span>Export Data</span>
-                    <span className="text-xs text-muted-foreground">Download CSV/PDF reports</span>
-                  </div>
-                </Button>
-                <Button variant="outline" className="h-auto p-4">
-                  <div className="flex flex-col items-center">
-                    <Upload className="w-6 h-6 mb-2" />
-                    <span>Import Data</span>
-                    <span className="text-xs text-muted-foreground">Upload inventory from CSV</span>
-                  </div>
-                </Button>
-              </div>
-              <div className="p-4 border rounded-lg bg-muted/20">
-                <h4 className="font-medium mb-2">Automatic Backup</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Last backup: Today at 3:00 AM
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Daily automatic backup</span>
-                  <Switch defaultChecked />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Security */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="w-5 h-5 mr-2 text-primary" />
-                Security & Privacy
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full justify-start">
-                Change Password
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                Two-Factor Authentication
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                Active Sessions
-              </Button>
-              <Separator />
-              <div className="p-4 border border-destructive/20 rounded-lg bg-destructive/5">
-                <h4 className="font-medium text-destructive mb-2">Danger Zone</h4>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Irreversible actions that will permanently delete your data.
-                </p>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Delete Account
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      {/* Connectivity */}
+      <Card className="shadow-lg border-0">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <Wifi className="w-5 h-5 text-sky-600" />
+            <span>Connectivity</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span>SmartShelf Hub</span>
+            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+              Connected
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>IoT Shelf Sensor A1</span>
+            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+              Active
+            </Badge>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Backup Sensor B3</span>
+            <Badge variant="outline" className="bg-yellow-100 text-yellow-700 border-yellow-300">
+              Idle
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

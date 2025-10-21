@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { getOrders, addOrder, deleteOrder } from "../api/orderService";
+import { Download, Eye, Trash2, PlusCircle, RefreshCcw } from "lucide-react";
 import "./Orders.css";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [newOrder, setNewOrder] = useState({
     customerName: "",
     items: "",
@@ -13,27 +15,24 @@ export default function Orders() {
     status: "Pending",
   });
 
-  useEffect(() => {                                   
+  useEffect(() => {
     loadOrders();
   }, []);
 
   const loadOrders = async () => {
     try {
+      setLoading(true);
       const data = await getOrders();
       setOrders(Array.isArray(data) ? data : data.orders || []);
     } catch {
       setOrders([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleAdd = async () => {
-    if (
-      !newOrder.customerName ||
-      !newOrder.items ||
-      !newOrder.totalAmount ||
-      !newOrder.paymentMethod ||
-      !newOrder.date
-    ) {
+    if (!newOrder.customerName || !newOrder.items || !newOrder.totalAmount || !newOrder.paymentMethod || !newOrder.date) {
       alert("Please fill all fields");
       return;
     }
@@ -65,14 +64,25 @@ export default function Orders() {
 
   const getStatusBadge = (status) =>
     status === "Completed" ? (
-      <span className="status-badge completed">Completed</span>
+      <span className="status-badge completed">✔ Completed</span>
     ) : (
-      <span className="status-badge pending">Pending</span>
+      <span className="status-badge pending">⏳ Pending</span>
     );
 
   return (
-    <div className="orders-container">
-      <h2 className="orders-title">📦 Orders Management</h2>
+    <div className="orders-page">
+      <div className="orders-header">
+        <div>
+          <h2 className="orders-title">📦 Orders Management</h2>
+          <p className="orders-subtitle">Manage and track customer orders efficiently.</p>
+        </div>
+        <div className="orders-actions">
+          <button className="btn-refresh" onClick={loadOrders}>
+            <RefreshCcw size={18} /> Refresh
+          </button>
+        </div>
+      </div>
+
       <div className="orders-table-wrapper">
         <table className="orders-table">
           <thead>
@@ -87,8 +97,8 @@ export default function Orders() {
               <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
-            {/* New Order Input Row */}
             <tr className="new-row">
               <td className="muted">Auto</td>
               <td>
@@ -121,13 +131,17 @@ export default function Orders() {
                 />
               </td>
               <td>
-                <input
-                  placeholder="Payment"
+                <select
                   value={newOrder.paymentMethod}
                   onChange={(e) =>
                     setNewOrder({ ...newOrder, paymentMethod: e.target.value })
                   }
-                />
+                >
+                  <option value="">Select</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="UPI">UPI</option>
+                </select>
               </td>
               <td>
                 <input
@@ -161,13 +175,16 @@ export default function Orders() {
                     !newOrder.date
                   }
                 >
-                  Save
+                  <PlusCircle size={16} /> Add
                 </button>
               </td>
             </tr>
 
-            {/* Existing Orders */}
-            {orders.length > 0 ? (
+            {loading ? (
+              <tr>
+                <td colSpan="8" className="no-data">Loading orders...</td>
+              </tr>
+            ) : orders.length > 0 ? (
               orders.map((o) => (
                 <tr key={o.id}>
                   <td>{o.orderId || o.id}</td>
@@ -177,23 +194,18 @@ export default function Orders() {
                   <td>{o.paymentMethod}</td>
                   <td>{o.date}</td>
                   <td>{getStatusBadge(o.status)}</td>
-                  <td>
-                    <button className="btn-view">👁</button>
-                    <button className="btn-download">⬇</button>
-                    <button
-                      className="btn-delete"
-                      onClick={() => handleDelete(o.id)}
-                    >
-                      Delete
+                  <td className="actions">
+                    <button className="btn-icon view"><Eye size={16} /></button>
+                    <button className="btn-icon download"><Download size={16} /></button>
+                    <button className="btn-icon delete" onClick={() => handleDelete(o.id)}>
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="8" className="no-data">
-                  No orders found
-                </td>
+                <td colSpan="8" className="no-data">No orders found</td>
               </tr>
             )}
           </tbody>

@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,16 +14,10 @@ import {
 } from "lucide-react";
 import { StatDetailModal } from "./StatDetailModal";
 
-// -------------------
-// ✅ Axios instance
-// -------------------
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
 });
 
-// -------------------
-// ✅ Stat Card Component
-// -------------------
 interface StatCardProps {
   title: string;
   value: string;
@@ -38,50 +31,38 @@ interface StatCardProps {
 const StatCard = ({ title, value, change, changeType, icon, description, onClick }: StatCardProps) => {
   const getChangeColor = () => {
     switch (changeType) {
-      case "positive":
-        return "text-green-600";
-      case "negative":
-        return "text-red-600";
-      default:
-        return "text-gray-500";
+      case "positive": return "text-green-600";
+      case "negative": return "text-red-600";
+      default: return "text-gray-500";
     }
   };
 
   const getChangeIcon = () => {
     switch (changeType) {
-      case "positive":
-        return <TrendingUp className="w-3 h-3" />;
-      case "negative":
-        return <TrendingDown className="w-3 h-3" />;
-      default:
-        return null;
+      case "positive": return <TrendingUp className="w-3 h-3" />;
+      case "negative": return <TrendingDown className="w-3 h-3" />;
+      default: return null;
     }
   };
 
   return (
-    <Card
-      className={`hover:shadow-lg transition-all duration-200 border-border/50 ${onClick ? "cursor-pointer hover:bg-muted/50" : ""}`}
-      onClick={onClick}
-    >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+    <Card className={`hover:shadow-xl transition-all duration-200 border border-gray-200 rounded-lg ${onClick ? "cursor-pointer hover:bg-gray-50" : ""}`} onClick={onClick}>
+      <CardHeader className="flex justify-between items-center pb-2">
+        <CardTitle className="text-sm font-semibold text-gray-600">{title}</CardTitle>
         <div className="text-primary">{icon}</div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-foreground mb-1">{value}</div>
+        <div className="text-2xl font-bold text-gray-800 mb-1">{value}</div>
         <div className={`flex items-center text-xs ${getChangeColor()}`}>
           {getChangeIcon()}
           <span className="ml-1">{change}</span>
         </div>
-        {description && <p className="text-xs text-muted-foreground mt-1">{description}</p>}
+        {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
       </CardContent>
     </Card>
   );
 };
 
-// -------------------
-// ✅ Dashboard Stats Component
-// -------------------
 interface DashboardStatsData {
   totalRevenue?: number;
   totalOrders?: number;
@@ -100,17 +81,13 @@ export function DashboardStats() {
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
   const [filterDateRange, setFilterDateRange] = useState("Last Month");
 
-  // -------------------
-  // ✅ Fetch stats from backend
-  // -------------------
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/dashboard/stats"); // correct endpoint
+      const res = await api.get("/dashboard/stats");
       setStats(res.data);
     } catch (err) {
-      console.error("❌ Failed to fetch dashboard stats:", err);
-      alert("Failed to load stats from backend. Check your server.");
+      console.error(err);
       setStats(null);
     } finally {
       setLoading(false);
@@ -121,9 +98,6 @@ export function DashboardStats() {
     fetchStats();
   }, []);
 
-  // -------------------
-  // ✅ Modal handlers
-  // -------------------
   const openModal = (title: string) => {
     setSelectedStat(title);
     setModalOpen(true);
@@ -134,13 +108,8 @@ export function DashboardStats() {
     setModalOpen(false);
   };
 
-  const handleRefresh = () => {
-    fetchStats();
-  };
-
-  const handleFilterChange = () => {
-    setFilterDateRange((prev) => (prev === "Last Month" ? "Last Quarter" : "Last Month"));
-  };
+  const handleRefresh = () => fetchStats();
+  const handleFilterChange = () => setFilterDateRange(prev => prev === "Last Month" ? "Last Quarter" : "Last Month");
 
   const s: DashboardStatsData = {
     totalRevenue: stats?.totalRevenue ?? 0,
@@ -154,67 +123,64 @@ export function DashboardStats() {
   };
 
   const statDetailsData: Record<string, string> = {
-    "Total Revenue": `Detailed revenue data:\n- This month: ₹${s.totalRevenue?.toLocaleString()}\n- Change: ${s.revenueChange}%`,
-    "Total Orders": `Orders processed: ${s.totalOrders}\nChange: ${s.ordersChange}%`,
-    "Inventory Items": `Total items: ${s.inventoryItems}\nChange: ${s.inventoryChange}%`,
-    "Low Stock Alerts": `Current alerts: ${s.lowStockAlerts}\nNew alerts: ${s.newAlerts}`,
+    "Total Revenue": `Revenue: ₹${s.totalRevenue?.toLocaleString()} (${s.revenueChange}%)`,
+    "Total Orders": `Orders: ${s.totalOrders} (${s.ordersChange}%)`,
+    "Inventory Items": `Items: ${s.inventoryItems} (${s.inventoryChange}%)`,
+    "Low Stock Alerts": `Alerts: ${s.lowStockAlerts} (+${s.newAlerts} new)`,
   };
 
-  // -------------------
-  // ✅ Render
-  // -------------------
   return (
     <>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold">Dashboard Stats</h2>
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm" onClick={handleFilterChange} className="flex items-center space-x-1">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-3">
+        <h2 className="text-xl font-semibold text-gray-700">Dashboard Stats</h2>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={handleFilterChange} className="flex items-center gap-1">
             <Filter className="w-4 h-4" />
             <span>{filterDateRange}</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading} className="flex items-center space-x-1">
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading} className="flex items-center gap-1">
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             <span>{loading ? "Refreshing..." : "Refresh"}</span>
           </Button>
         </div>
       </div>
 
-      {loading && <p className="text-sm text-muted-foreground mb-2">Loading stats...</p>}
+      {loading && <p className="text-sm text-gray-500 mb-2">Loading stats...</p>}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Revenue"
           value={`₹${s.totalRevenue?.toLocaleString()}`}
-          change={`+${s.revenueChange ?? 0}% from last month`}
+          change={`${s.revenueChange! >= 0 ? "+" : ""}${s.revenueChange}% from last month`}
           changeType={s.revenueChange! >= 0 ? "positive" : "negative"}
-          icon={<DollarSign className="w-5 h-5" />}
+          icon={<DollarSign className="w-5 h-5 text-yellow-600" />}
           description="Monthly revenue target: ₹50,000"
           onClick={() => openModal("Total Revenue")}
         />
         <StatCard
           title="Total Orders"
-          value={`${s.totalOrders ?? 0}`}
-          change={`+${s.ordersChange ?? 0}% from last month`}
+          value={`${s.totalOrders}`}
+          change={`${s.ordersChange! >= 0 ? "+" : ""}${s.ordersChange}% from last month`}
           changeType={s.ordersChange! >= 0 ? "positive" : "negative"}
-          icon={<ShoppingCart className="w-5 h-5" />}
+          icon={<ShoppingCart className="w-5 h-5 text-blue-600" />}
           description="Average order value: ₹367"
           onClick={() => openModal("Total Orders")}
         />
         <StatCard
           title="Inventory Items"
-          value={`${s.inventoryItems ?? 0}`}
-          change={`${s.inventoryChange ?? 0}% from last month`}
+          value={`${s.inventoryItems}`}
+          change={`${s.inventoryChange! >= 0 ? "+" : ""}${s.inventoryChange}% from last month`}
           changeType={s.inventoryChange! < 0 ? "negative" : "positive"}
-          icon={<Package className="w-5 h-5" />}
+          icon={<Package className="w-5 h-5 text-purple-600" />}
           description={`Items running low: ${s.lowStockAlerts}`}
           onClick={() => openModal("Inventory Items")}
         />
         <StatCard
           title="Low Stock Alerts"
-          value={`${s.lowStockAlerts ?? 0}`}
-          change={`+${s.newAlerts ?? 0} new alerts`}
+          value={`${s.lowStockAlerts}`}
+          change={`+${s.newAlerts} new alerts`}
           changeType="negative"
-          icon={<AlertTriangle className="w-5 h-5" />}
+          icon={<AlertTriangle className="w-5 h-5 text-red-600" />}
           description="Requires immediate attention"
           onClick={() => openModal("Low Stock Alerts")}
         />
