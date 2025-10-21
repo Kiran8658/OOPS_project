@@ -1,6 +1,6 @@
-// main.tsx
+// src/main.tsx
 
-// Extend Window interface for React Router dev tools
+// Extend Window for React Router future flags
 declare global {
   interface Window {
     __reactRouterDevTools?: {
@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-// ✅ Opt-in to React Router v7 future flags before imports
+// Opt-in to future flags **before importing any routing modules**
 window.__reactRouterDevTools = {
   v7_startTransition: true,
   v7_relativeSplatPath: true,
