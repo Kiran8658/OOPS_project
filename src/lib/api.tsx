@@ -1,13 +1,16 @@
-import axios, {
-  AxiosError,
-  InternalAxiosRequestConfig, // ✅ use this instead of AxiosRequestConfig
-} from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-
+// ----------------------------------
+// BASE API CONFIGURATION
+// ----------------------------------
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8080/api",
   headers: { "Content-Type": "application/json" },
 });
+
+// ----------------------------------
+// JWT TOKEN INTERCEPTOR
+// ----------------------------------
 API.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("token");
@@ -19,13 +22,14 @@ API.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
-// ---------------------------
+// ==================================================
 // PRODUCT API
-// ---------------------------
+// ==================================================
 export const fetchProducts = async () => {
   const response = await API.get("/products");
   return response.data;
 };
+
 export const fetchProductById = async (id: string) => {
   const response = await API.get(`/products/${id}`);
   return response.data;
@@ -46,9 +50,9 @@ export const deleteProduct = async (id: string) => {
   return response.data;
 };
 
-// ---------------------------
-// USER API (Login/Register)
-// ---------------------------
+// ==================================================
+// USER AUTHENTICATION API
+// ==================================================
 export const registerUser = async (user: any) => {
   const response = await API.post("/auth/register", user);
   return response.data;
@@ -62,7 +66,6 @@ export const loginUser = async (credentials: any) => {
   if (data?.token) {
     localStorage.setItem("token", data.token);
   }
-
   return data;
 };
 
@@ -72,9 +75,9 @@ export const fetchUsers = async () => {
   return response.data;
 };
 
-// ---------------------------
+// ==================================================
 // ORDER API
-// ---------------------------
+// ==================================================
 export const fetchOrders = async () => {
   const response = await API.get("/orders");
   return response.data;
@@ -100,9 +103,9 @@ export const deleteOrder = async (id: string) => {
   return response.data;
 };
 
-// ---------------------------
+// ==================================================
 // INVENTORY API
-// ---------------------------
+// ==================================================
 export const fetchInventory = async () => {
   const response = await API.get("/inventory");
   return response.data;
@@ -123,15 +126,36 @@ export const deleteInventoryItem = async (id: string) => {
   return response.data;
 };
 
-// ---------------------------
+// ==================================================
+// ANALYTICS API  ✅ UPDATED FOR YOUR PROJECT
+// ==================================================
+
+// Fetch all analytics entries
+export const fetchAnalytics = async () => {
+  const response = await API.get("/analytics");
+  return response.data;
+};
+
+// Add new analytics data (store in database)
+export const addAnalytics = async (data: any) => {
+  const response = await API.post("/analytics", data);
+  return response.data;
+};
+
+// (Optional) Fetch KPIs or other analytics summaries if implemented later
+export const fetchKPIs = async () => {
+  const response = await API.get("/analytics/kpis");
+  return response.data;
+};
+
+// ==================================================
 // LOGOUT FUNCTION
-// ---------------------------
-// ✅ Clear token and user session
+// ==================================================
 export const logoutUser = () => {
   localStorage.removeItem("token");
 };
 
-// ---------------------------
-// EXPORT DEFAULT
-// ---------------------------
+// ==================================================
+// DEFAULT EXPORT
+// ==================================================
 export default API;
