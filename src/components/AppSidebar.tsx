@@ -12,17 +12,6 @@ import {
   X,
   LogOut,
 } from "lucide-react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
 interface AppSidebarProps {
@@ -41,9 +30,10 @@ const navigationItems = [
 ];
 
 export function AppSidebar({ onLogout, isAuthenticated }: AppSidebarProps) {
-  const { state, toggleSidebar } = useSidebar();
+  const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const collapsed = state === "collapsed";
+
+  const toggleSidebar = () => setCollapsed((prev) => !prev);
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -60,8 +50,10 @@ export function AppSidebar({ onLogout, isAuthenticated }: AppSidebarProps) {
   };
 
   return (
-    <Sidebar
-      className={`border-r border-border ${collapsed ? "w-16" : "w-64"} transition-all duration-300 flex flex-col`}
+    <div
+      className={`border-r border-border ${
+        collapsed ? "w-16" : "w-64"
+      } transition-all duration-300 flex flex-col bg-background h-screen`}
     >
       {/* Logo & Toggle */}
       <div className="flex items-center justify-between p-4 border-b border-border">
@@ -81,46 +73,34 @@ export function AppSidebar({ onLogout, isAuthenticated }: AppSidebarProps) {
       </div>
 
       {/* Sidebar Content */}
-      <SidebarContent className="p-4 flex-1 overflow-y-auto">
+      <div className="p-4 flex-1 overflow-y-auto">
         {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : "text-xs font-semibold text-muted-foreground mb-2"}>
-            Navigation
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink to={item.url} className={getNavClasses(item.url)}>
-                      <item.icon className={`w-5 h-5 ${collapsed ? "mx-auto" : "mr-3"}`} />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        <div className="mb-4">
+          {!collapsed && (
+            <div className="text-xs font-semibold text-muted-foreground mb-2">
+              Navigation
+            </div>
+          )}
+          <div className="space-y-1">
+            {navigationItems.map((item) => (
+              <NavLink key={item.title} to={item.url} className={getNavClasses(item.url)}>
+                <item.icon className={`w-5 h-5 ${collapsed ? "mx-auto" : "mr-3"}`} />
+                {!collapsed && <span>{item.title}</span>}
+              </NavLink>
+            ))}
+          </div>
+        </div>
 
         {/* Logout */}
         {isAuthenticated && (
-          <SidebarGroup className="mt-4">
-            <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <button onClick={onLogout} className={getNavClasses("")}>
-                      <LogOut className={`w-5 h-5 ${collapsed ? "mx-auto" : "mr-3"}`} />
-                      {!collapsed && <span>Logout</span>}
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <div className="mt-4">
+            <button onClick={onLogout} className={getNavClasses("")}>
+              <LogOut className={`w-5 h-5 ${collapsed ? "mx-auto" : "mr-3"}`} />
+              {!collapsed && <span>Logout</span>}
+            </button>
+          </div>
         )}
-      </SidebarContent>
-    </Sidebar>
+      </div>
+    </div>
   );
 }
