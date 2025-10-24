@@ -107,16 +107,16 @@ const mockStores: StoreData[] = [
 
 // Utility badges
 const getStatusBadge = (status: string) => {
-  switch (status) {
-    case "active":
-      return <Badge className="bg-green-100 text-green-700 border border-green-300">Active</Badge>;
-    case "inactive":
-      return <Badge className="bg-red-100 text-red-700 border border-red-300">Inactive</Badge>;
-    case "maintenance":
-      return <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-300">Maintenance</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
+  const colors: Record<string, string> = {
+    active: "bg-green-100 text-green-800 border-green-300",
+    inactive: "bg-red-100 text-red-800 border-red-300",
+    maintenance: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  };
+  return (
+    <Badge className={`border ${colors[status] || "bg-gray-100 text-gray-700"}`}>
+      {status.charAt(0).toUpperCase() + status.slice(1)}
+    </Badge>
+  );
 };
 
 const getTypeBadge = (type: string) => {
@@ -128,7 +128,7 @@ const getTypeBadge = (type: string) => {
     general: "bg-gray-100 text-gray-800",
   };
   return (
-    <Badge className={`${colors[type] || "bg-gray-100 text-gray-700"} border`}>
+    <Badge className={`border ${colors[type] || "bg-gray-100 text-gray-700"}`}>
       {type.charAt(0).toUpperCase() + type.slice(1)}
     </Badge>
   );
@@ -154,26 +154,20 @@ export default function Stores() {
   const totalOrders = mockStores.reduce((sum, store) => sum + store.orders, 0);
 
   return (
-    <div className="space-y-6 text-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-[#fef5f1] via-[#fff8f6] to-[#fef5f1] text-gray-900 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Store Management</h1>
-          <p className="text-gray-600 mt-2">
-            Manage all your SmartShelf-enabled stores from one central dashboard.
-          </p>
-        </div>
-        <Button className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md hover:shadow-lg">
-          <Plus className="w-4 h-4 mr-2" />
-          Add New Store
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Store Management</h1>
+        <Button className="bg-gradient-to-r from-[#d8272d] to-[#b81e23] text-white shadow-lg hover:shadow-xl">
+          <Plus className="w-4 h-4 mr-2" /> Add New Store
         </Button>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-blue-50 border border-blue-200">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        <Card className="bg-gradient-to-r from-[#d8272d]/20 to-[#b81e23]/20 border-none">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between text-blue-900">
+            <div className="flex justify-between items-center text-[#d8272d]">
               <div>
                 <p className="text-sm">Total Stores</p>
                 <p className="text-2xl font-bold">{mockStores.length}</p>
@@ -183,9 +177,9 @@ export default function Stores() {
           </CardContent>
         </Card>
 
-        <Card className="bg-green-50 border border-green-200">
+        <Card className="bg-gradient-to-r from-green-200/30 to-green-400/30 border-none">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between text-green-900">
+            <div className="flex justify-between items-center text-green-800">
               <div>
                 <p className="text-sm">Active Stores</p>
                 <p className="text-2xl font-bold">{activeStores}</p>
@@ -195,9 +189,9 @@ export default function Stores() {
           </CardContent>
         </Card>
 
-        <Card className="bg-purple-50 border border-purple-200">
+        <Card className="bg-gradient-to-r from-blue-200/30 to-blue-400/30 border-none">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between text-purple-900">
+            <div className="flex justify-between items-center text-blue-800">
               <div>
                 <p className="text-sm">Total Revenue</p>
                 <p className="text-2xl font-bold">₹{totalRevenue.toLocaleString()}</p>
@@ -207,9 +201,9 @@ export default function Stores() {
           </CardContent>
         </Card>
 
-        <Card className="bg-amber-50 border border-amber-200">
+        <Card className="bg-gradient-to-r from-purple-200/30 to-purple-400/30 border-none">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between text-amber-900">
+            <div className="flex justify-between items-center text-purple-800">
               <div>
                 <p className="text-sm">Total Orders</p>
                 <p className="text-2xl font-bold">{totalOrders}</p>
@@ -221,13 +215,13 @@ export default function Stores() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-6 bg-white">
+      <Card className="mb-6 bg-white/80 backdrop-blur-md border border-gray-200">
+        <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Search stores by name, city, or manager..."
+                placeholder="Search stores..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9 border-gray-300 text-gray-800"
@@ -266,13 +260,12 @@ export default function Stores() {
       {/* Stores List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredStores.map((store) => (
-          <Card key={store.id} className="hover:shadow-md border border-gray-200 transition-all bg-white text-gray-900">
+          <Card key={store.id} className="hover:shadow-2xl transition-all border border-gray-200 bg-white/80 backdrop-blur-md">
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Store className="w-5 h-5 text-blue-600" />
-                    {store.name}
+                  <CardTitle className="flex items-center gap-2 text-gray-900">
+                    <Store className="w-5 h-5 text-[#d8272d]" /> {store.name}
                   </CardTitle>
                   <div className="flex items-center gap-2 mt-2">
                     {getTypeBadge(store.type)}
@@ -284,7 +277,7 @@ export default function Stores() {
                     <Eye className="w-4 h-4 text-gray-700" />
                   </Button>
                   <Button variant="ghost" size="sm">
-                    <Edit className="w-4 h-4 text-blue-700" />
+                    <Edit className="w-4 h-4 text-[#d8272d]" />
                   </Button>
                   <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
                     <Trash2 className="w-4 h-4" />
@@ -293,8 +286,8 @@ export default function Stores() {
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
-              <div className="space-y-2 text-sm text-gray-700">
+            <CardContent className="space-y-4 text-gray-700">
+              <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-500" />
                   <span>{store.address}, {store.city}</span>
@@ -315,7 +308,7 @@ export default function Stores() {
 
               <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
                 <div className="text-center">
-                  <p className="text-lg font-bold text-blue-700">₹{store.revenue.toLocaleString()}</p>
+                  <p className="text-lg font-bold text-[#d8272d]">₹{store.revenue.toLocaleString()}</p>
                   <p className="text-xs text-gray-500">Revenue</p>
                 </div>
                 <div className="text-center">
