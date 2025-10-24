@@ -40,14 +40,10 @@ export default function Analytics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [analytics, setAnalytics] = useState<any[]>([]);
   const [salesData, setSalesData] = useState<any[]>([]);
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
 
-  // ---------------------------
-  // FETCH ANALYTICS DATA
-  // ---------------------------
   useEffect(() => {
     fetchAnalyticsData();
   }, [timeRange]);
@@ -56,13 +52,8 @@ export default function Analytics() {
     try {
       setLoading(true);
       setError(null);
+      const data = await fetchAnalytics();
 
-      const data = await fetchAnalytics(); // ✅ Backend API call (GET /api/analytics)
-      console.log("Fetched Analytics:", data);
-
-      setAnalytics(data || []);
-
-      // Optional: You can split data into charts if your backend provides structured data
       setSalesData(
         data?.salesTrend || [
           { month: "Jan", sales: 45000 },
@@ -76,10 +67,10 @@ export default function Analytics() {
 
       setCategoryData(
         data?.categoryDistribution || [
-          { name: "Groceries", value: 40, color: "#2563eb" },
-          { name: "Medicines", value: 25, color: "#10b981" },
-          { name: "Vegetables", value: 20, color: "#f59e0b" },
-          { name: "Stationery", value: 15, color: "#ef4444" },
+          { name: "Groceries", value: 40, color: "#d8272d" },
+          { name: "Medicines", value: 25, color: "#b81e23" },
+          { name: "Vegetables", value: 20, color: "#ff6b6b" },
+          { name: "Stationery", value: 15, color: "#ff9b9b" },
         ]
       );
 
@@ -94,15 +85,12 @@ export default function Analytics() {
       );
     } catch (err: any) {
       console.error("Error fetching analytics:", err);
-      setError(err?.response?.data?.message || "Failed to load analytics data");
+      setError("⚠️ Failed to load analytics. Showing sample data.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ---------------------------
-  // ADD NEW ANALYTICS ENTRY
-  // ---------------------------
   const handleAddAnalytics = async () => {
     const newAnalyticsData = {
       reportDate: new Date().toISOString(),
@@ -110,66 +98,61 @@ export default function Analytics() {
       profitMargin: (Math.random() * 40).toFixed(2),
       topCategory: "Groceries",
     };
-
     try {
-      await addAnalytics(newAnalyticsData); // ✅ POST /api/analytics
-      fetchAnalyticsData(); // Refresh data after insert
+      await addAnalytics(newAnalyticsData);
+      fetchAnalyticsData();
     } catch (err) {
       console.error("Error adding analytics:", err);
     }
   };
 
-  // Default KPI cards if backend doesn’t provide any
   const defaultKPIs = [
     {
       title: "Revenue Growth",
       value: "+12.5%",
       subtitle: "vs last month",
-      icon: <Target className="w-8 h-8 text-blue-600" />,
+      icon: <Target className="w-8 h-8 text-[#d8272d]" />,
     },
     {
       title: "Order Volume",
       value: "+8.2%",
       subtitle: "180 orders",
-      icon: <BarChart3 className="w-8 h-8 text-green-600" />,
+      icon: <BarChart3 className="w-8 h-8 text-[#b81e23]" />,
     },
     {
       title: "Customer Satisfaction",
       value: "94%",
       subtitle: "+2% this week",
-      icon: <Zap className="w-8 h-8 text-yellow-500" />,
+      icon: <Zap className="w-8 h-8 text-[#ff6b6b]" />,
     },
     {
       title: "Profit Margin",
       value: "28.3%",
       subtitle: "-1.2% vs target",
-      icon: <PieChartIcon className="w-8 h-8 text-red-500" />,
+      icon: <PieChartIcon className="w-8 h-8 text-[#d8272d]" />,
     },
   ];
 
   return (
-    <div className="space-y-8 text-gray-900">
+    <div className="space-y-8 p-6 bg-gradient-to-br from-[#fef5f1] via-[#fff8f6] to-[#fef5f1] min-h-screen rounded-xl">
       {error && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            ⚠️ {error} - Using sample data for preview
-          </p>
+        <div className="p-4 bg-[#fff3f3] border border-[#f1d1d1] rounded-lg text-[#b81e23]">
+          {error}
         </div>
       )}
 
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Analytics Dashboard
-          </h1>
+          <h1 className="text-3xl font-bold text-[#b81e23]">Analytics Dashboard</h1>
           <p className="text-gray-600 mt-1">
             Comprehensive insights powered by SmartShelf.
           </p>
         </div>
+
         <div className="flex gap-2">
           <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-40 border-gray-300">
+            <SelectTrigger className="w-40 border-[#d8272d] text-[#b81e23]">
               <SelectValue placeholder="Select Range" />
             </SelectTrigger>
             <SelectContent>
@@ -180,15 +163,15 @@ export default function Analytics() {
             </SelectContent>
           </Select>
           <Button
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-[#d8272d] hover:bg-[#b81e23] text-white font-semibold"
             onClick={handleAddAnalytics}
           >
             <PlusCircle className="w-4 h-4 mr-2" />
             Add Data
           </Button>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button className="border border-[#d8272d] text-[#d8272d] hover:bg-[#d8272d] hover:text-white font-semibold">
             <Download className="w-4 h-4 mr-2" />
-            Export Report
+            Export
           </Button>
         </div>
       </div>
@@ -196,19 +179,20 @@ export default function Analytics() {
       {/* KPI Cards */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#d8272d]" />
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {defaultKPIs.map((item, i) => (
-            <Card key={i} className="border border-gray-200 shadow-sm">
+            <Card
+              key={i}
+              className="border border-[#f1d1d1] shadow-md hover:shadow-lg transition rounded-2xl bg-white"
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-500">{item.title}</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {item.value}
-                    </p>
+                    <p className="text-2xl font-bold text-[#b81e23]">{item.value}</p>
                     <p className="text-sm text-gray-500 mt-1">{item.subtitle}</p>
                   </div>
                   {item.icon}
@@ -220,96 +204,86 @@ export default function Analytics() {
       )}
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales Trend */}
-        <Card className="border border-gray-200">
-          <CardHeader>
-            <CardTitle className="flex items-center text-gray-900">
-              <BarChart3 className="w-5 h-5 mr-2 text-blue-600" />
-              Sales Trend
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+      {!loading && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Sales Trend */}
+          <Card className="border border-[#f1d1d1] shadow-md rounded-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center text-[#b81e23]">
+                <BarChart3 className="w-5 h-5 mr-2 text-[#d8272d]" />
+                Sales Trend
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[320px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={salesData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3d6d6" />
+                    <XAxis dataKey="month" stroke="#b81e23" />
+                    <YAxis stroke="#b81e23" />
+                    <Tooltip formatter={(value) => [`₹${value}`, "Sales"]} />
+                    <Bar dataKey="sales" fill="#d8272d" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={salesData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="month" stroke="#374151" />
-                  <YAxis stroke="#374151" />
-                  <Tooltip formatter={(value) => [`₹${value}`, "Sales"]} />
-                  <Bar dataKey="sales" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {/* Category Distribution */}
-        <Card className="border border-gray-200">
-          <CardHeader>
-            <CardTitle className="flex items-center text-gray-900">
-              <PieChartIcon className="w-5 h-5 mr-2 text-blue-600" />
-              Sales by Category
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          {/* Category Distribution */}
+          <Card className="border border-[#f1d1d1] shadow-md rounded-2xl">
+            <CardHeader>
+              <CardTitle className="flex items-center text-[#b81e23]">
+                <PieChartIcon className="w-5 h-5 mr-2 text-[#d8272d]" />
+                Sales by Category
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[320px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}%`}
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}%`}
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Top Products */}
-      <Card className="border border-gray-200">
-        <CardHeader>
-          <CardTitle className="flex items-center text-gray-900">
-            <TrendingUp className="w-5 h-5 mr-2 text-blue-600" />
-            Top Performing Products
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-            </div>
-          ) : (
+      {!loading && (
+        <Card className="border border-[#f1d1d1] shadow-md rounded-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center text-[#b81e23]">
+              <TrendingUp className="w-5 h-5 mr-2 text-[#d8272d]" />
+              Top Performing Products
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
             <div className="space-y-4">
               {topProducts.map((product, index) => (
                 <div
                   key={product.name}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-between p-4 border border-[#f1d1d1] rounded-lg hover:bg-[#fff5f5] transition"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                    <div className="w-8 h-8 rounded-full bg-[#ffe5e5] flex items-center justify-center text-[#b81e23] font-bold">
                       {index + 1}
                     </div>
                     <div>
-                      <h4 className="font-medium text-gray-900">
+                      <h4 className="font-medium text-[#b81e23]">
                         {product.name}
                       </h4>
                       <p className="text-sm text-gray-500">
@@ -319,7 +293,7 @@ export default function Analytics() {
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-[#b81e23]">
                         ₹{product.revenue.toLocaleString()}
                       </p>
                       <div className="flex items-center justify-end">
@@ -344,9 +318,9 @@ export default function Analytics() {
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
