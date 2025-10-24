@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+// src/pages/SettingsPage.tsx
+import { useState } from "react";
 import {
   Card,
   CardContent,
@@ -24,25 +25,18 @@ import {
   Bell,
   Shield,
   Palette,
-  Database,
   Wifi,
   Save,
   Trash2,
-  Sun,
-  Moon,
-  Monitor,
-  Plus,
-  Home,
   Camera,
-  Globe,
-  Clock,
+  Home,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function SettingsPage() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("profile");
-  const [theme, setTheme] = useState("system");
+  const [theme, setTheme] = useState("light");
   const [notifications, setNotifications] = useState({
     lowStock: true,
     expiry: true,
@@ -52,27 +46,6 @@ export default function SettingsPage() {
     sms: false,
     push: true,
   });
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "system";
-    setTheme(savedTheme);
-    applyTheme(savedTheme);
-  }, []);
-
-  const applyTheme = (value: string) => {
-    document.documentElement.classList.remove("dark");
-    if (value === "dark") document.documentElement.classList.add("dark");
-    else if (value === "system") {
-      if (window.matchMedia("(prefers-color-scheme: dark)").matches)
-        document.documentElement.classList.add("dark");
-    }
-  };
-
-  const handleThemeChange = (value: string) => {
-    setTheme(value);
-    applyTheme(value);
-    localStorage.setItem("theme", value);
-  };
 
   const handleSave = () => {
     localStorage.setItem("notifications", JSON.stringify(notifications));
@@ -105,18 +78,20 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-gray-200">
+    <div className="flex min-h-screen bg-gradient-to-br from-[#fef5f1] via-[#fff8f6] to-[#fef5f1] text-gray-900 font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-md border-r p-4">
-        <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
-          <Settings className="w-6 h-6 text-indigo-600" /> Settings
+      <aside className="w-64 bg-white shadow-md border-r border-gray-200 p-4">
+        <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-[#d8272d]">
+          <Settings className="w-6 h-6" /> Settings
         </h2>
         <nav className="flex flex-col gap-2">
           {menuItems.map((item) => (
             <button
               key={item.id}
-              className={`flex items-center gap-2 p-2 rounded hover:bg-indigo-100 ${
-                activeTab === item.id ? "bg-indigo-100 font-semibold" : ""
+              className={`flex items-center gap-2 p-2 rounded transition-colors ${
+                activeTab === item.id
+                  ? "bg-gradient-to-r from-[#d8272d] to-[#b81e23] text-white font-semibold"
+                  : "hover:bg-[#feeaea] text-[#d8272d]"
               }`}
               onClick={() => setActiveTab(item.id)}
             >
@@ -127,46 +102,35 @@ export default function SettingsPage() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 space-y-8 overflow-auto bg-gray-200">
+      <main className="flex-1 p-8 space-y-8 overflow-auto">
         {/* PROFILE */}
         {activeTab === "profile" && (
-          <Card className="shadow-lg border-0">
+          <Card className="shadow-md border border-gray-200 bg-white rounded-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-600" /> Profile Details
+              <CardTitle className="flex items-center gap-2 text-[#d8272d]">
+                <User className="w-5 h-5" /> Profile Details
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <Label>Full Name</Label>
-                <Input placeholder="John Doe" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Email</Label>
-                <Input placeholder="john@example.com" type="email" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Phone</Label>
-                <Input placeholder="+91 98765 43210" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Username</Label>
-                <Input placeholder="johndoe123" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Address</Label>
-                <Input placeholder="Street, City, State, ZIP" />
-              </div>
+              {["Full Name", "Email", "Phone", "Username", "Address"].map((field) => (
+                <div key={field} className="flex flex-col gap-1">
+                  <Label>{field}</Label>
+                  <Input placeholder={field} />
+                </div>
+              ))}
               <div className="flex flex-col gap-1">
                 <Label>Profile Picture</Label>
-                <Button variant="outline" className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 border-gray-300 text-[#d8272d]"
+                >
                   <Camera className="w-4 h-4" /> Upload
                 </Button>
               </div>
               <div className="flex justify-end">
                 <Button
                   onClick={handleSave}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-500 text-white shadow-md"
+                  className="bg-gradient-to-r from-[#d8272d] to-[#b81e23] text-white shadow-md flex items-center hover:opacity-90"
                 >
                   <Save className="w-4 h-4 mr-2" /> Save Profile
                 </Button>
@@ -177,45 +141,23 @@ export default function SettingsPage() {
 
         {/* SHOP */}
         {activeTab === "shop" && (
-          <Card className="shadow-lg border-0">
+          <Card className="shadow-md border border-gray-200 bg-white rounded-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Home className="w-5 h-5 text-green-600" /> Shop Details
+              <CardTitle className="flex items-center gap-2 text-[#d8272d]">
+                <Home className="w-5 h-5" /> Shop Details
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
-              <div className="flex flex-col gap-1">
-                <Label>Shop Name</Label>
-                <Input placeholder="SmartShelf Store" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Location</Label>
-                <Input placeholder="City, State" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>ZIP / Postal Code</Label>
-                <Input placeholder="123456" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Country</Label>
-                <Input placeholder="India" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Shop Phone</Label>
-                <Input placeholder="+91 98765 43210" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Opening Hours</Label>
-                <Input placeholder="09:00 AM - 09:00 PM" />
-              </div>
-              <div className="flex flex-col gap-1">
-                <Label>Manager Name</Label>
-                <Input placeholder="Jane Doe" />
-              </div>
+              {["Shop Name", "Location", "ZIP / Postal Code", "Country", "Shop Phone", "Opening Hours", "Manager Name"].map((field) => (
+                <div key={field} className="flex flex-col gap-1">
+                  <Label>{field}</Label>
+                  <Input placeholder={field} />
+                </div>
+              ))}
               <div className="flex justify-end">
                 <Button
                   onClick={handleSave}
-                  className="bg-gradient-to-r from-green-600 to-green-500 text-white shadow-md"
+                  className="bg-gradient-to-r from-[#d8272d] to-[#b81e23] text-white shadow-md flex items-center hover:opacity-90"
                 >
                   <Save className="w-4 h-4 mr-2" /> Save Shop
                 </Button>
@@ -226,43 +168,25 @@ export default function SettingsPage() {
 
         {/* APP SETTINGS */}
         {activeTab === "settings" && (
-          <Card className="shadow-lg border-0">
+          <Card className="shadow-md border border-gray-200 bg-white rounded-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5 text-purple-600" /> App Settings
+              <CardTitle className="flex items-center gap-2 text-[#d8272d]">
+                <Palette className="w-5 h-5" /> App Settings
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-1">
                 <Label>Theme</Label>
-                <Select value={theme} onValueChange={handleThemeChange}>
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select Theme" />
+                <Select value={theme} onValueChange={setTheme}>
+                  <SelectTrigger className="w-[200px] border-gray-300">
+                    <SelectValue placeholder="Light (Fixed)" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">
-                      <div className="flex items-center gap-2">
-                        <Sun className="w-4 h-4" /> Light
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="dark">
-                      <div className="flex items-center gap-2">
-                        <Moon className="w-4 h-4" /> Dark
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="system">
-                      <div className="flex items-center gap-2">
-                        <Monitor className="w-4 h-4" /> System
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
                 </Select>
               </div>
-
               <div className="flex flex-col gap-1">
                 <Label>Language</Label>
                 <Select>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-[200px] border-gray-300">
                     <SelectValue placeholder="English" />
                   </SelectTrigger>
                   <SelectContent>
@@ -272,7 +196,6 @@ export default function SettingsPage() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="flex items-center justify-between">
                 <Label>Auto Backup</Label>
                 <Switch defaultChecked />
@@ -283,18 +206,15 @@ export default function SettingsPage() {
 
         {/* NOTIFICATIONS */}
         {activeTab === "notifications" && (
-          <Card className="shadow-lg border-0">
+          <Card className="shadow-md border border-gray-200 bg-white rounded-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-yellow-600" /> Notifications
+              <CardTitle className="flex items-center gap-2 text-[#d8272d]">
+                <Bell className="w-5 h-5" /> Notifications
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               {Object.keys(notifications).map((key) => (
-                <div
-                  key={key}
-                  className="flex items-center justify-between w-full"
-                >
+                <div key={key} className="flex items-center justify-between">
                   <Label className="capitalize">{key.replace(/([A-Z])/g, " $1")}</Label>
                   <Switch
                     checked={notifications[key as keyof typeof notifications]}
@@ -310,10 +230,10 @@ export default function SettingsPage() {
 
         {/* CONNECTIVITY */}
         {activeTab === "connectivity" && (
-          <Card className="shadow-lg border-0">
+          <Card className="shadow-md border border-gray-200 bg-white rounded-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wifi className="w-5 h-5 text-sky-600" /> Connectivity
+              <CardTitle className="flex items-center gap-2 text-[#d8272d]">
+                <Wifi className="w-5 h-5" /> Connectivity
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
@@ -335,38 +255,26 @@ export default function SettingsPage() {
                   Idle
                 </Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <Label>Network Type</Label>
-                <span>Wi-Fi 5GHz</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <Label>Last Sync</Label>
-                <span>Today, 12:45 PM</span>
-              </div>
             </CardContent>
           </Card>
         )}
 
         {/* SECURITY */}
         {activeTab === "security" && (
-          <Card className="shadow-lg border-0">
+          <Card className="shadow-md border border-gray-200 bg-white rounded-md">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="w-5 h-5 text-red-600" /> Security
+              <CardTitle className="flex items-center gap-2 text-[#d8272d]">
+                <Shield className="w-5 h-5" /> Security
               </CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <Button variant="outline">Change Password</Button>
-                <Button variant="outline">Enable 2FA</Button>
+                <Button variant="outline" className="text-[#d8272d]">Change Password</Button>
+                <Button variant="outline" className="text-[#d8272d]">Enable 2FA</Button>
               </div>
               <div className="flex flex-col gap-1">
                 <Label>Security Questions</Label>
                 <Input placeholder="Mother's maiden name?" />
-              </div>
-              <div>
-                <Label>Active Sessions</Label>
-                <span className="text-gray-600">2 devices logged in</span>
               </div>
               <Separator className="my-2" />
               <Button variant="destructive" onClick={handleDeleteAccount}>
