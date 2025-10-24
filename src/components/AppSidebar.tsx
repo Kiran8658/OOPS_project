@@ -44,31 +44,31 @@ export function AppSidebar({ onLogout, isAuthenticated }: AppSidebarProps) {
     const baseClasses =
       "flex items-center w-full justify-start px-3 py-2 rounded-md transition-all duration-200 text-sm font-medium";
     if (isActive(path)) {
-      return `${baseClasses} bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md`;
+      return `${baseClasses} bg-gradient-to-r from-[#d8272d] to-[#b81e23] text-white shadow-md`;
     }
-    return `${baseClasses} hover:bg-muted text-muted-foreground hover:text-foreground`;
+    return `${baseClasses} hover:bg-[#feeaea] text-[#d8272d] hover:text-[#b81e23]`;
   };
 
   return (
     <div
-      className={`border-r border-border ${
+      className={`border-r border-gray-200 ${
         collapsed ? "w-16" : "w-64"
-      } transition-all duration-300 flex flex-col bg-background h-screen`}
+      } transition-all duration-300 flex flex-col bg-white h-screen`}
     >
       {/* Logo & Toggle */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200">
         {!collapsed && (
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-r from-[#d8272d] to-[#b81e23] rounded-lg flex items-center justify-center">
               <Package className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-xl bg-gradient-to-r from-blue-500 to-indigo-600 bg-clip-text text-transparent">
-              SmartIMS
+            <span className="font-bold text-xl bg-gradient-to-r from-[#d8272d] to-[#b81e23] bg-clip-text text-transparent">
+              SmartShelf
             </span>
           </div>
         )}
         <Button variant="ghost" size="sm" onClick={toggleSidebar} className="p-2">
-          {collapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
+          {collapsed ? <Menu className="w-4 h-4 text-[#d8272d]" /> : <X className="w-4 h-4 text-[#d8272d]" />}
         </Button>
       </div>
 
@@ -77,7 +77,7 @@ export function AppSidebar({ onLogout, isAuthenticated }: AppSidebarProps) {
         {/* Main Navigation */}
         <div className="mb-4">
           {!collapsed && (
-            <div className="text-xs font-semibold text-muted-foreground mb-2">
+            <div className="text-xs font-semibold text-[#d8272d] mb-2">
               Navigation
             </div>
           )}
