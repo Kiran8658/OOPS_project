@@ -57,7 +57,7 @@ const getStatusBadge = (status: string) => {
       );
     case "out-of-stock":
       return (
-        <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-300">
+        <Badge variant="destructive" className="bg-[#ffe5e5] text-[#b81e23] border-[#d8272d]">
           Out of Stock
         </Badge>
       );
@@ -157,18 +157,18 @@ export default function Inventory() {
   };
 
   return (
-    <div className="space-y-8 text-gray-500">
+    <div className="space-y-8 text-gray-800 bg-gradient-to-br from-[#fef5f1] via-[#fff8f6] to-[#fef5f1] p-6 rounded-xl shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-600">Inventory Management</h1>
+          <h1 className="text-3xl font-bold text-[#d8272d]">Inventory Management</h1>
           <p className="text-gray-600 mt-2">
             Manage your stock levels, track expiry dates, and monitor inventory status.
           </p>
         </div>
         <Button
           onClick={handleAddClick}
-          className="bg-blue-500 hover:bg-blue-400 text-white shadow-md"
+          className="bg-[#d8272d] hover:bg-[#b81e23] text-white shadow-lg mt-4 md:mt-0 px-5 py-2 rounded-lg"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add New Item
@@ -176,7 +176,7 @@ export default function Inventory() {
       </div>
 
       {/* Filters */}
-      <Card className="border border-gray-300 shadow-sm">
+      <Card className="border border-gray-200 bg-white shadow-lg rounded-2xl">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
@@ -185,12 +185,12 @@ export default function Inventory() {
                 placeholder="Search inventory items..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 border-gray-300"
+                className="pl-9 border-gray-300 rounded-lg"
               />
             </div>
 
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full md:w-48 border-gray-300">
+              <SelectTrigger className="w-full md:w-48 border-gray-300 rounded-lg">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
@@ -204,7 +204,7 @@ export default function Inventory() {
             </Select>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48 border-gray-300">
+              <SelectTrigger className="w-full md:w-48 border-gray-300 rounded-lg">
                 <SelectValue placeholder="Filter by status" />
               </SelectTrigger>
               <SelectContent>
@@ -224,17 +224,17 @@ export default function Inventory() {
       </Card>
 
       {/* Inventory Table */}
-      <Card className="border border-gray-300 shadow-md">
+      <Card className="border border-gray-200 bg-white shadow-xl rounded-2xl">
         <CardHeader>
-          <CardTitle className="flex items-center text-gray-500">
-            <Package className="w-5 h-5 mr-2 text-blue-300" />
+          <CardTitle className="flex items-center text-[#d8272d]">
+            <Package className="w-5 h-5 mr-2 text-[#d8272d]" />
             Inventory Items ({filteredInventory.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border border-gray-200 overflow-x-auto">
+          <div className="rounded-xl border border-gray-200 overflow-x-auto">
             <Table>
-              <TableHeader className="bg-gray-100">
+              <TableHeader className="bg-[#fdf2f2]">
                 <TableRow>
                   <TableHead>Item Name</TableHead>
                   <TableHead>Category</TableHead>
@@ -248,7 +248,7 @@ export default function Inventory() {
               <TableBody>
                 {filteredInventory.length > 0 ? (
                   filteredInventory.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-gray-50">
+                    <TableRow key={item.id} className="hover:bg-[#fff3f3] transition-all">
                       <TableCell className="font-medium">{item.name}</TableCell>
                       <TableCell>
                         <Badge variant="outline" className="text-gray-700 border-gray-300">
@@ -270,7 +270,7 @@ export default function Inventory() {
                             className={
                               new Date(item.expiryDate) <
                               new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-                                ? "text-red-600 font-medium"
+                                ? "text-[#b81e23] font-medium"
                                 : "text-gray-600"
                             }
                           >
@@ -287,14 +287,14 @@ export default function Inventory() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEditClick(item.id)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="text-[#d8272d] hover:text-[#b81e23]"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-red-600 hover:text-red-800"
+                            className="text-[#b81e23] hover:text-[#d8272d]"
                             onClick={() => handleDeleteClick(item.id)}
                           >
                             <Trash2 className="w-4 h-4" />
