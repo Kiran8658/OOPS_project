@@ -1,8 +1,21 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -22,91 +35,33 @@ import {
   Package,
   Edit,
   Trash2,
-  Eye,
 } from "lucide-react";
+import {
+  getStores,
+  addStore,
+  updateStore,
+  deleteStore,
+} from "@/api/storeService";
 
-// Mock data
 interface StoreData {
-  id: string;
+  id?: string | number;
   name: string;
   address: string;
   city: string;
   phone: string;
   email: string;
   manager: string;
-  type: "grocery" | "medical" | "stationery" | "vegetables" | "general";
-  status: "active" | "inactive" | "maintenance";
+  type: string;
+  status: string;
   revenue: number;
   orders: number;
   inventory: number;
   rating: number;
 }
 
-const mockStores: StoreData[] = [
-  {
-    id: "ST001",
-    name: "Downtown Grocery Hub",
-    address: "123 Main Street, Central Market",
-    city: "Mumbai",
-    phone: "+91 98765 43210",
-    email: "downtown@smartshelf.com",
-    manager: "Rajesh Kumar",
-    type: "grocery",
-    status: "active",
-    revenue: 125000,
-    orders: 450,
-    inventory: 1200,
-    rating: 4.8,
-  },
-  {
-    id: "ST002",
-    name: "MediCare Plus Pharmacy",
-    address: "456 Health Avenue, Medical District",
-    city: "Delhi",
-    phone: "+91 98765 43211",
-    email: "medicare@smartshelf.com",
-    manager: "Dr. Priya Sharma",
-    type: "medical",
-    status: "active",
-    revenue: 89000,
-    orders: 320,
-    inventory: 850,
-    rating: 4.9,
-  },
-  {
-    id: "ST003",
-    name: "Fresh Veggie Market",
-    address: "789 Green Street, Farmer's Market",
-    city: "Bangalore",
-    phone: "+91 98765 43212",
-    email: "freshveggie@smartshelf.com",
-    manager: "Amit Singh",
-    type: "vegetables",
-    status: "maintenance",
-    revenue: 45000,
-    orders: 180,
-    inventory: 400,
-    rating: 4.5,
-  },
-  {
-    id: "ST004",
-    name: "Smart Stationery World",
-    address: "321 Education Lane, Student Quarter",
-    city: "Pune",
-    phone: "+91 98765 43213",
-    email: "stationery@smartshelf.com",
-    manager: "Sunita Patel",
-    type: "stationery",
-    status: "active",
-    revenue: 67000,
-    orders: 290,
-    inventory: 950,
-    rating: 4.6,
-  },
-];
-
-// Utility badges
-const getStatusBadge = (status: string) => {
+// Utility: Status badge
+const getStatusBadge = (status: string | null | undefined) => {
+  if (!status) return <Badge className="bg-gray-100 text-gray-600">N/A</Badge>;
   const colors: Record<string, string> = {
     active: "bg-green-100 text-green-800 border-green-300",
     inactive: "bg-red-100 text-red-800 border-red-300",
@@ -119,7 +74,9 @@ const getStatusBadge = (status: string) => {
   );
 };
 
-const getTypeBadge = (type: string) => {
+// Utility: Type badge
+const getTypeBadge = (type: string | null | undefined) => {
+  if (!type) return <Badge className="bg-gray-100 text-gray-600">N/A</Badge>;
   const colors: Record<string, string> = {
     grocery: "bg-blue-100 text-blue-800",
     medical: "bg-green-100 text-green-800",
@@ -135,207 +92,309 @@ const getTypeBadge = (type: string) => {
 };
 
 export default function Stores() {
+  const [stores, setStores] = useState<StoreData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-
-  const filteredStores = mockStores.filter((store) => {
-    const matchesSearch =
-      store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      store.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      store.manager.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || store.type === typeFilter;
-    const matchesStatus = statusFilter === "all" || store.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
+  const [loading, setLoading] = useState(false);
+  const [openForm, setOpenForm] = useState(false);
+  const [newStore, setNewStore] = useState<StoreData>({
+    name: "",
+    address: "",
+    city: "",
+    phone: "",
+    email: "",
+    manager: "",
+    type: "general",
+    status: "active",
+    revenue: 0,
+    orders: 0,
+    inventory: 0,
+    rating: 0,
   });
 
-  const totalRevenue = mockStores.reduce((sum, store) => sum + store.revenue, 0);
-  const activeStores = mockStores.filter((store) => store.status === "active").length;
-  const totalOrders = mockStores.reduce((sum, store) => sum + store.orders, 0);
+  const fetchStores = async () => {
+    setLoading(true);
+    try {
+      const data = await getStores();
+      if (Array.isArray(data)) {
+        setStores(
+          data.map((store) => ({
+            ...store,
+            id: String(store.id ?? ""),
+            type: store.type || "general",
+            status: store.status || "active",
+          }))
+        );
+      } else setStores([]);
+    } catch (err) {
+      console.error("❌ Error fetching stores:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStores();
+  }, []);
+
+  // ✅ Add new store
+  const handleSaveStore = async () => {
+    try {
+      await addStore(newStore);
+      await fetchStores();
+      setOpenForm(false);
+      alert("✅ Store added successfully!");
+    } catch (err) {
+      console.error("❌ Error adding store:", err);
+      alert("Failed to save store!");
+    }
+  };
+
+  // Edit store
+  const handleEdit = async (id: string | number) => {
+    const newName = prompt("Enter new name:");
+    if (!newName) return;
+    try {
+      await updateStore(Number(id), { name: newName });
+      await fetchStores();
+    } catch (err) {
+      console.error("❌ Error updating store:", err);
+    }
+  };
+
+  // Delete store
+  const handleDelete = async (id: string | number) => {
+    if (!confirm("Are you sure to delete this store?")) return;
+    try {
+      await deleteStore(Number(id));
+      await fetchStores();
+    } catch (err) {
+      console.error("❌ Error deleting store:", err);
+    }
+  };
+
+  const filteredStores = stores.filter((store) => {
+    const matchSearch =
+      store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      store.city.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchType = typeFilter === "all" || store.type === typeFilter;
+    const matchStatus = statusFilter === "all" || store.status === statusFilter;
+    return matchSearch && matchType && matchStatus;
+  });
+
+  const totalRevenue = stores.reduce((sum, s) => sum + (s.revenue || 0), 0);
+  const activeStores = stores.filter((s) => s.status === "active").length;
+  const totalOrders = stores.reduce((sum, s) => sum + (s.orders || 0), 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#fef5f1] via-[#fff8f6] to-[#fef5f1] text-gray-900 p-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Store Management</h1>
-        <Button className="bg-gradient-to-r from-[#d8272d] to-[#b81e23] text-white shadow-lg hover:shadow-xl">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Store Management</h1>
+        <Button
+          onClick={() => setOpenForm(true)}
+          className="bg-gradient-to-r from-[#d8272d] to-[#b81e23] text-white shadow-lg"
+        >
           <Plus className="w-4 h-4 mr-2" /> Add New Store
         </Button>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-        <Card className="bg-gradient-to-r from-[#d8272d]/20 to-[#b81e23]/20 border-none">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center text-[#d8272d]">
-              <div>
-                <p className="text-sm">Total Stores</p>
-                <p className="text-2xl font-bold">{mockStores.length}</p>
-              </div>
-              <Store className="w-8 h-8 opacity-75" />
+        <Card className="bg-[#fdecea] border-none">
+          <CardContent className="p-6 flex justify-between">
+            <div>
+              <p className="text-sm text-[#b81e23]">Total Stores</p>
+              <p className="text-2xl font-bold">{stores.length}</p>
             </div>
+            <Store className="w-8 h-8 text-[#b81e23]" />
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-r from-green-200/30 to-green-400/30 border-none">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center text-green-800">
-              <div>
-                <p className="text-sm">Active Stores</p>
-                <p className="text-2xl font-bold">{activeStores}</p>
-              </div>
-              <Users className="w-8 h-8 opacity-75" />
+        <Card className="bg-green-100 border-none">
+          <CardContent className="p-6 flex justify-between text-green-700">
+            <div>
+              <p className="text-sm">Active Stores</p>
+              <p className="text-2xl font-bold">{activeStores}</p>
             </div>
+            <Users className="w-8 h-8" />
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-r from-blue-200/30 to-blue-400/30 border-none">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center text-blue-800">
-              <div>
-                <p className="text-sm">Total Revenue</p>
-                <p className="text-2xl font-bold">₹{totalRevenue.toLocaleString()}</p>
-              </div>
-              <TrendingUp className="w-8 h-8 opacity-75" />
+        <Card className="bg-blue-100 border-none">
+          <CardContent className="p-6 flex justify-between text-blue-700">
+            <div>
+              <p className="text-sm">Total Revenue</p>
+              <p className="text-2xl font-bold">₹{totalRevenue}</p>
             </div>
+            <TrendingUp className="w-8 h-8" />
           </CardContent>
         </Card>
-
-        <Card className="bg-gradient-to-r from-purple-200/30 to-purple-400/30 border-none">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-center text-purple-800">
-              <div>
-                <p className="text-sm">Total Orders</p>
-                <p className="text-2xl font-bold">{totalOrders}</p>
-              </div>
-              <Package className="w-8 h-8 opacity-75" />
+        <Card className="bg-purple-100 border-none">
+          <CardContent className="p-6 flex justify-between text-purple-700">
+            <div>
+              <p className="text-sm">Total Orders</p>
+              <p className="text-2xl font-bold">{totalOrders}</p>
             </div>
+            <Package className="w-8 h-8" />
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card className="mb-6 bg-white/80 backdrop-blur-md border border-gray-200">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search stores..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 border-gray-300 text-gray-800"
-              />
-            </div>
-
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full md:w-48 text-gray-800 border-gray-300">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="grocery">Grocery</SelectItem>
-                <SelectItem value="medical">Medical</SelectItem>
-                <SelectItem value="stationery">Stationery</SelectItem>
-                <SelectItem value="vegetables">Vegetables</SelectItem>
-                <SelectItem value="general">General</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48 text-gray-800 border-gray-300">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Search + Filter */}
+      <Card className="mb-6">
+        <CardContent className="flex flex-wrap gap-4 items-center p-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 text-gray-400" />
+            <Input
+              placeholder="Search stores..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
+
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="grocery">Grocery</SelectItem>
+              <SelectItem value="medical">Medical</SelectItem>
+              <SelectItem value="stationery">Stationery</SelectItem>
+              <SelectItem value="vegetables">Vegetables</SelectItem>
+              <SelectItem value="general">General</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="maintenance">Maintenance</SelectItem>
+            </SelectContent>
+          </Select>
         </CardContent>
       </Card>
 
-      {/* Stores List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredStores.map((store) => (
-          <Card key={store.id} className="hover:shadow-2xl transition-all border border-gray-200 bg-white/80 backdrop-blur-md">
-            <CardHeader>
-              <div className="flex items-start justify-between">
+      {/* Store Cards */}
+      {loading ? (
+        <p className="text-center text-gray-500">Loading stores...</p>
+      ) : (
+        <div className="grid md:grid-cols-2 gap-6">
+          {filteredStores.map((store) => (
+            <Card key={store.id}>
+              <CardHeader className="flex justify-between">
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-gray-900">
+                  <CardTitle className="flex items-center gap-2">
                     <Store className="w-5 h-5 text-[#d8272d]" /> {store.name}
                   </CardTitle>
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex gap-2 mt-2">
                     {getTypeBadge(store.type)}
                     {getStatusBadge(store.status)}
                   </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm">
-                    <Eye className="w-4 h-4 text-gray-700" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => handleEdit(store.id!)}>
                     <Edit className="w-4 h-4 text-[#d8272d]" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
-                    <Trash2 className="w-4 h-4" />
+                  <Button size="sm" variant="ghost" onClick={() => handleDelete(store.id!)}>
+                    <Trash2 className="w-4 h-4 text-red-600" />
                   </Button>
                 </div>
-              </div>
-            </CardHeader>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-700 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-gray-500" /> {store.address}, {store.city}
+                </p>
+                <p className="text-sm text-gray-700 flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-gray-500" /> {store.phone}
+                </p>
+                <p className="text-sm text-gray-700 flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-gray-500" /> {store.email}
+                </p>
+                <p className="text-sm text-gray-700 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-gray-500" /> Manager: {store.manager}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-            <CardContent className="space-y-4 text-gray-700">
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <span>{store.address}, {store.city}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-gray-500" />
-                  <span>{store.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-gray-500" />
-                  <span>{store.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-gray-500" />
-                  <span>Manager: {store.manager}</span>
-                </div>
-              </div>
+      {/* ✅ Add Store Modal */}
+      <Dialog open={openForm} onOpenChange={setOpenForm}>
+        <DialogContent className="max-w-lg bg-white text-gray-900 rounded-xl border border-gray-200 shadow-lg">
+          <DialogHeader>
+            <DialogTitle className="text-center text-xl font-semibold text-gray-900">
+              Add New Store
+            </DialogTitle>
+          </DialogHeader>
 
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-                <div className="text-center">
-                  <p className="text-lg font-bold text-[#d8272d]">₹{store.revenue.toLocaleString()}</p>
-                  <p className="text-xs text-gray-500">Revenue</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold text-green-700">{store.orders}</p>
-                  <p className="text-xs text-gray-500">Orders</p>
-                </div>
-                <div className="text-center">
-                  <p className="text-lg font-bold text-purple-700">{store.inventory}</p>
-                  <p className="text-xs text-gray-500">Items</p>
-                </div>
+          <div className="grid gap-4 py-4">
+            {["name", "address", "city", "phone", "email", "manager"].map((field) => (
+              <div key={field}>
+                <Label className="capitalize text-gray-800 font-medium mb-1 block">
+                  {field}
+                </Label>
+                <Input
+                  className="bg-gray-50 border border-gray-300 text-gray-900 focus:border-[#d8272d] focus:ring-[#d8272d]"
+                  value={(newStore as any)[field]}
+                  onChange={(e) => setNewStore({ ...newStore, [field]: e.target.value })}
+                />
               </div>
+            ))}
 
-              <div className="flex items-center justify-between pt-3 border-t border-gray-200">
-                <span className="text-sm text-gray-600">Customer Rating</span>
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-gray-800">{store.rating}</span>
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i} className={`text-sm ${i < Math.floor(store.rating) ? "text-yellow-500" : "text-gray-300"}`}>
-                      ★
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            <div>
+              <Label className="text-gray-800 font-medium mb-1 block">Type</Label>
+              <Select
+                value={newStore.type}
+                onValueChange={(v) => setNewStore({ ...newStore, type: v })}
+              >
+                <SelectTrigger className="bg-gray-50 border-gray-300 text-gray-900">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="grocery">Grocery</SelectItem>
+                  <SelectItem value="medical">Medical</SelectItem>
+                  <SelectItem value="stationery">Stationery</SelectItem>
+                  <SelectItem value="vegetables">Vegetables</SelectItem>
+                  <SelectItem value="general">General</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-gray-800 font-medium mb-1 block">Status</Label>
+              <Select
+                value={newStore.status}
+                onValueChange={(v) => setNewStore({ ...newStore, status: v })}
+              >
+                <SelectTrigger className="bg-gray-50 border-gray-300 text-gray-900">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={handleSaveStore}
+              className="bg-gradient-to-r from-[#d8272d] to-[#b81e23] text-white w-full"
+            >
+              Save Store
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
